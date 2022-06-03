@@ -180,12 +180,8 @@ void read_randomly_runner(const char *filename, BYTES bytes, BYTES lower_read_li
     // TODO: set srand
     __nsec total = 0;
 
-    FILE *file = fopen(filename, "r");
-    BYTES size = get_file_size(file);
-    fclose(file);
-
     printf("###########################\n");
-    printf("Measuring random-access read of %lluMB\n", B_TO_MB(size));
+    printf("Measuring random-access read\n");
 
     __nsec result;
     __nsec result_ms;
@@ -205,7 +201,7 @@ void read_randomly_runner(const char *filename, BYTES bytes, BYTES lower_read_li
     __nsec total_ms = ukarch_time_nsec_to_msec(total);
 
     printf("%d measurements successfully conducted\n", measurements);
-	printf("Reading %llu megabytes took on average: %ldms %.3fs \n", B_TO_MB(size), total_ms, (double) total_ms / 1000);
+	printf("Reading %llu megabytes took on average: %ldms %.3fs \n", B_TO_MB(bytes), total_ms, (double) total_ms / 1000);
 
 }
 
