@@ -11,6 +11,7 @@ BYTES get_file_size(FILE *file) {
 	return size;
 }
 
+
 /*
    Samples natrual numbers in range [lower; upper)
 */

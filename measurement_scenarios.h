@@ -6,8 +6,9 @@
 
 #include "helper_functions.h"
 
-void create_remove_files(int file_amount);
-void list_dir(int file_amount);
+__nsec create_files(int amount);
+__nsec remove_files(int amount);
+__nsec list_dir(int file_amount);
 
 __nsec write_seq(BYTES bytes);
 __nsec write_seq_malloc(BYTES bytes);

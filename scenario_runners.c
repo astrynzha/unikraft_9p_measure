@@ -43,6 +43,85 @@ FILE *create_file_of_size(const char *filename, BYTES bytes) {
 	return file;
 }
 
+void create_files_runner(int amount, int measurements) {
+    __nsec total = 0;
+
+    printf("###########################\n");
+    printf("Measuring creating %d files\n", amount);
+
+    __nsec result;
+    __nsec result_ms;
+
+    for (int i = 0; i < measurements; i++) {
+        printf("Measurement %d/%d running...\n", i, measurements);
+
+        result = create_files(amount);
+        result_ms = ukarch_time_nsec_to_msec(result); 
+        printf("Result: %ldms %.3fs\n", result_ms, (double) result_ms / 1000);
+
+        total += result;
+    }
+
+    total /= measurements;
+    __nsec total_ms = ukarch_time_nsec_to_msec(total);
+
+    printf("%d measurements successfully conducted\n", measurements);
+	printf("Creating %d files took on average: %ldms %.3fs \n", amount, total_ms, (double) total_ms / 1000);
+}
+
+void remove_files_runner(int amount, int measurements) {
+    __nsec total = 0;
+
+    printf("###########################\n");
+    printf("Measuring removing %d files\n", amount);
+
+    __nsec result;
+    __nsec result_ms;
+
+    for (int i = 0; i < measurements; i++) {
+        printf("Measurement %d/%d running...\n", i, measurements);
+
+        result = remove_files(amount);
+        result_ms = ukarch_time_nsec_to_msec(result); 
+        printf("Result: %ldms %.3fs\n", result_ms, (double) result_ms / 1000);
+
+        total += result;
+    }
+
+    total /= measurements;
+    __nsec total_ms = ukarch_time_nsec_to_msec(total);
+
+    printf("%d measurements successfully conducted\n", measurements);
+	printf("Removing %d files took on average: %ldms %.3fs \n", amount, total_ms, (double) total_ms / 1000);
+}
+
+void list_dir_runner(int file_amount, int measurements) {
+    __nsec total = 0;
+
+    printf("###########################\n");
+    printf("Measuring listing %d files\n", file_amount);
+
+    __nsec result;
+    __nsec result_ms;
+
+    for (int i = 0; i < measurements; i++) {
+        printf("Measurement %d/%d running...\n", i, measurements);
+
+        result = list_dir(file_amount);
+        result_ms = ukarch_time_nsec_to_msec(result); 
+        printf("Result: %ldms %.3fs\n", result_ms, (double) result_ms / 1000);
+
+        total += result;
+    }
+
+    total /= measurements;
+    __nsec total_ms = ukarch_time_nsec_to_msec(total);
+
+    printf("%d measurements successfully conducted\n", measurements);
+	printf("Listing %d files took on average: %ldms %.3fs \n", file_amount, total_ms, (double) total_ms / 1000);
+
+}
+
 void write_seq_runner(BYTES bytes, int measurements) {
     __nsec total = 0;
 

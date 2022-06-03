@@ -5,22 +5,24 @@
 #include <dirent.h>
 #include <stdlib.h>
 
+
 /*
-    Measure creating and removing `file_amount` files.
+    Measure removing `amount` files.
 
     Necessary files are created and deleted by the function.
 */
-void create_remove_files(int file_amount) {
-	__nsec create_start, creat_end, delete_start, delete_end, time_ms;
+__nsec create_files(int amount) {
+	__nsec start, end;
 
-    int max_file_name_length = 7 + DIGITS(file_amount - 1);
-	char file_names[file_amount][max_file_name_length]; 
-    init_filenames(file_amount, max_file_name_length, file_names);
+    int max_file_name_length = 7 + DIGITS(amount - 1);
+	char file_names[amount][max_file_name_length]; 
+    init_filenames(amount, max_file_name_length, file_names);
 
-    // measuring the creation of file_amount files
+    // measuring the creation of `amount` files
 
-	create_start = ukplat_monotonic_clock();
-	for (int i = 0; i < file_amount; i++) {
+	start = ukplat_monotonic_clock();
+
+	for (int i = 0; i < amount; i++) {
 		FILE *file = fopen(file_names[i], "w");
 	    if (file == NULL) {
             fprintf(stderr, "Error creating file number %d.\n", i);
@@ -28,23 +30,54 @@ void create_remove_files(int file_amount) {
         }
 		fclose(file);
 	}
-	creat_end = ukplat_monotonic_clock();
 
-    // measuring the delition of file_amount files
+	end = ukplat_monotonic_clock();
 
-	delete_start = ukplat_monotonic_clock();
-	for (int i = 0; i < file_amount; i++) {
+    // cleaning up: deleting all files
+
+	for (int i = 0; i < amount; i++) {
 		if (remove(file_names[i]) != 0) {
 			fprintf(stderr, "Failed to remove \"%s\" file\n", file_names[i]);
 		}
 	}
-	delete_end = ukplat_monotonic_clock();
 
-	time_ms = ukarch_time_nsec_to_msec(creat_end - create_start);
-	printf("Creating %d files took: %ldms %.3fs \n", file_amount, time_ms, (double) time_ms / 1000);
+    return end - start;
+}
 
-	time_ms = ukarch_time_nsec_to_msec(delete_end - delete_start);
-	printf("Deleting %d files took: %ldms %.3fs \n", file_amount, time_ms, (double) time_ms / 1000);
+/*
+    Measure creating `amount` files.
+
+    Necessary files are created and deleted by the function.
+*/
+__nsec remove_files(int amount) {
+    __nsec start, end;
+
+    int max_file_name_length = 7 + DIGITS(amount - 1);
+	char file_names[amount][max_file_name_length]; 
+    init_filenames(amount, max_file_name_length, file_names);
+
+    // creating `amount` empty files
+
+	for (int i = 0; i < amount; i++) {
+		FILE *file = fopen(file_names[i], "w");
+	    if (file == NULL) {
+            fprintf(stderr, "Error creating file number %d.\n", i);
+            exit(EXIT_FAILURE);
+        }
+		fclose(file);
+	}
+
+    // measuring the delition of `amount` files
+
+	start = ukplat_monotonic_clock();
+	for (int i = 0; i < amount; i++) {
+		if (remove(file_names[i]) != 0) {
+			fprintf(stderr, "Failed to remove \"%s\" file\n", file_names[i]);
+		}
+	}
+	end = ukplat_monotonic_clock();
+
+    return end - start;
 }
 
 /*
@@ -52,8 +85,8 @@ void create_remove_files(int file_amount) {
 
     Necessary files are created and deleted by the function.
 */
-void list_dir(int file_amount) {
-	__nsec start, end, time_ms;
+__nsec list_dir(int file_amount) {
+	__nsec start, end;
 
     int max_file_name_length = 7 + DIGITS(file_amount - 1);
 	char file_names[file_amount][max_file_name_length]; 
@@ -69,6 +102,10 @@ void list_dir(int file_amount) {
 		fclose(file);
 	}
 
+    FILE *dummy_output = fopen("dummy", "w");
+
+    // listing files
+
 	start = ukplat_monotonic_clock();
 
 	DIR *dp;
@@ -79,22 +116,25 @@ void list_dir(int file_amount) {
     }
 
     while (ep = readdir (dp)) {
-        puts(ep->d_name);
+        fprintf(dummy_output, ep->d_name);
     }
 
     (void) closedir (dp);
 
 	end = ukplat_monotonic_clock();
-	time_ms = ukarch_time_nsec_to_msec(end - start);
-	printf("Listing %d files took: %ldms %.3fs \n", file_amount, time_ms, (double) time_ms / 1000);
 
     // deleting all created files
+
+    fclose(dummy_output);
+    remove("dummy");
 
 	for (int i = 0; i < file_amount; i++) {
 		if (remove(file_names[i]) != 0) {
 			fprintf(stderr, "Failed to remove \"%s\" file\n", file_names[i]);
 		}
 	}
+
+    return end - start;
 }
 
 /*
