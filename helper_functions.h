@@ -18,7 +18,6 @@
 typedef unsigned long long BYTES;
 
 BYTES get_file_size(FILE *file);
-FILE *create_file_of_size(const char *filename, BYTES megabytes);
 BYTES sample_in_range(BYTES lower, BYTES upper);
 void read_bytes(FILE *file, BYTES bytes);
 void write_bytes(FILE *file, BYTES bytes);

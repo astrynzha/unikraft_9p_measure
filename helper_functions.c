@@ -12,41 +12,6 @@ BYTES get_file_size(FILE *file) {
 }
 
 /*
-    Creates a file, filled with 'Z' charachters, of size `bytes`, with a given filename
-*/
-FILE *create_file_of_size(const char *filename, BYTES bytes) {
-	FILE *file;
-	BYTES buffer_size = KB(1); // TODO: warum kann buffer nicht beliebig gross werden?
-	char buffer[buffer_size];
-
-	for (BYTES i = 0; i < buffer_size; i++) {
-		buffer[i] = 'X';
-	}
-
-	file = fopen(filename, "w");
-	if (file == NULL) {
-		fprintf(stderr, "Error opening file '%s'.\n", filename);
-		exit(EXIT_FAILURE);
-	}
-
-	for (BYTES i = 0; i < B_TO_KB(bytes); i++) {
-		fwrite(buffer, sizeof(char), buffer_size, file);
-	}
-    BYTES rest = bytes % buffer_size;
-    if (rest > 0) {
-		if (rest != fwrite(buffer, sizeof(char), rest, file)) {
-			fprintf(stderr, "Failed to write the rest of the file\n");
-		}
-    }
-	
-	fclose(file);
-
-	printf("File %s of size %lluB created\n", filename, bytes);
-
-	return file;
-}
-
-/*
    Samples natrual numbers in range [lower; upper)
 */
 BYTES sample_in_range(BYTES lower, BYTES upper) {

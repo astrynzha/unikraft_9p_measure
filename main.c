@@ -10,7 +10,13 @@
 
 int main(int argc, char *argv[])
 {
-	write_seq_n_times(MB(50), 10);
+	read_seq_existing_runner("data_100M", 4);
+	// read_seq_existing_runner("data_100M", 4);
+	// read_seq_runner(MB(50), 4);	
+
+	// write_randomly_runner("data_100M", MB(50), MB(0.1), MB(1), 4);
+	// write_seq_malloc_runner(MB(50), 4);
+	// write_seq_runner(MB(50), 4);
 
 	// create_file_of_size("data_100M", 100);
 

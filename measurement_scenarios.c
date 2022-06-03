@@ -117,7 +117,7 @@ __nsec write_seq(BYTES bytes) {
 		buffer[i] = 'X';
 	}
 
-	__nsec start, end, time_ms;
+	__nsec start, end;
 
 	start = ukplat_monotonic_clock();
 
@@ -137,15 +137,7 @@ __nsec write_seq(BYTES bytes) {
 
 	fclose(file);
 
-	printf("File \"write_data\" was written\n");
-
-	time_ms = ukarch_time_nsec_to_msec(end - start);
-
-	printf("Writing %llu megabytes took: %ldms %.3fs \n", B_TO_MB(bytes), time_ms, (double) time_ms / 1000);
-
-	if (remove("write_data") == 0) {
-		printf("Cleaned up data successfully\n");
-	} else {
+	if (!remove("write_data") == 0) {
 		fprintf(stderr, "Failed to remove \"write_data\" file\n");
 	}
 
@@ -157,7 +149,7 @@ __nsec write_seq(BYTES bytes) {
     
     File is created and deleted by the function
 */
-void write_seq_malloc(BYTES bytes) {
+__nsec write_seq_malloc(BYTES bytes) {
 	FILE *file;
 
 	BYTES buffer_size = KB(1);
@@ -167,7 +159,7 @@ void write_seq_malloc(BYTES bytes) {
 		exit(0);
 	} 
 
-	__nsec start, end, time_ms;
+	__nsec start, end;
 	start = ukplat_monotonic_clock();
 
 	file = fopen("/write_data", "w");
@@ -185,16 +177,11 @@ void write_seq_malloc(BYTES bytes) {
 	fclose(file);
 	free(buffer);
 
-	time_ms = ukarch_time_nsec_to_msec(end - start);
-
-	printf("Writing %llu megabytes took: %ldms %.3fs \n", B_TO_MB(bytes),
-	time_ms, (double) time_ms / 1000);
-
-	if (remove("write_data") == 0) {
-		printf("Cleaned up data successfully\n");
-	} else {
+	if (!remove("write_data") == 0) {
 		fprintf(stderr, "Failed to remove \"write_data\" file\n");
 	}
+
+    return end - start;
 }
 
 /*
@@ -207,8 +194,7 @@ void write_seq_malloc(BYTES bytes) {
     2. Writes a random amount of bytes, sampled from range [lower_write_limit, upper_write_limit].
     3. Repeats steps 1-2 until the 'remeaining_bytes' amount of bytes is written.
 */
-void write_randomly(const char *filename, BYTES remeaining_bytes, BYTES lower_write_limit, BYTES upper_write_limit) {
-    BYTES megabytes_to_write = B_TO_MB(remeaining_bytes);
+__nsec write_randomly(const char *filename, BYTES remeaining_bytes, BYTES lower_write_limit, BYTES upper_write_limit) {
     // TODO: set seed = time
 	FILE *file;
 	file = fopen(filename, "r+");
@@ -218,7 +204,7 @@ void write_randomly(const char *filename, BYTES remeaining_bytes, BYTES lower_wr
 	}
 	BYTES size = get_file_size(file);
 
-	__nsec start, end, time_ms;
+	__nsec start, end;
 
 	start = ukplat_monotonic_clock();
 
@@ -238,9 +224,7 @@ void write_randomly(const char *filename, BYTES remeaining_bytes, BYTES lower_wr
 
 	fclose(file);
 
-	time_ms = ukarch_time_nsec_to_msec(end - start);
-
-	printf("Random writing of %llu megabytes took: %ldms %.3fs \n", megabytes_to_write, time_ms, (double) time_ms / 1000);
+    return end - start;
 }
 
 /*
@@ -248,7 +232,7 @@ void write_randomly(const char *filename, BYTES remeaining_bytes, BYTES lower_wr
 
     File is first created by the function, read and then deleted.
 */
-void read_seq(BYTES bytes) {
+__nsec read_seq(BYTES bytes) {
 	FILE *file;
 	BYTES buffer_size = KB(1); // TODO: warum kann buffer nicht beliebig gross werden?
     BYTES rest = bytes % buffer_size;
@@ -280,7 +264,7 @@ void read_seq(BYTES bytes) {
 
     // measuring sequential read
 
-	__nsec start, end, time_ms;
+	__nsec start, end;
 
 	start = ukplat_monotonic_clock();
 	file = fopen(filename, "r");
@@ -305,16 +289,11 @@ void read_seq(BYTES bytes) {
 
 	fclose(file);
 
-	time_ms = ukarch_time_nsec_to_msec(end - start);
-
-	printf("Reading %llu megabytes took: %ldms %.3fs \n", B_TO_MB(bytes), time_ms, (double) time_ms / 1000);
-
-	if (remove(filename) == 0) {
-		printf("Cleaned up data successfully\n");
-	} else {
+	if (!remove(filename) == 0) {
 		fprintf(stderr, "Failed to remove \"%s\" file\n", filename);
 	}
 
+    return end - start;
 }
 
 
@@ -323,7 +302,7 @@ void read_seq(BYTES bytes) {
 
     The file is provided by the caller and not deleted in the end.
 */
-void read_seq_existing(const char *filename) {
+__nsec read_seq_existing(const char *filename) {
 	FILE *file;
 	file = fopen(filename, "r");
 	if (file == NULL) {
@@ -338,7 +317,7 @@ void read_seq_existing(const char *filename) {
 	BYTES iterations = size / buffer_size;
 	BYTES rest = size % buffer_size;
 
-	__nsec start, end, time_ms;
+	__nsec start, end;
 
 	start = ukplat_monotonic_clock();
 	
@@ -357,9 +336,7 @@ void read_seq_existing(const char *filename) {
 
 	fclose(file);
 
-	time_ms = ukarch_time_nsec_to_msec(end - start);
-
-	printf("Reading %llu megabytes took: %ldms %.3fs \n", B_TO_MB(size), time_ms, (double) time_ms / 1000);
+    return end - start;
 }
 
 /*
@@ -372,9 +349,7 @@ void read_seq_existing(const char *filename) {
     
     File is provided by the caller.
 */
-void read_randomly(const char *filename, BYTES remaining_bytes, BYTES lower_read_limit, BYTES upper_read_limit) {
-    BYTES megabytes_to_read = B_TO_MB(remaining_bytes); // TODO: make floaing point
-
+__nsec read_randomly(const char *filename, BYTES remaining_bytes, BYTES lower_read_limit, BYTES upper_read_limit) {
 	FILE *file;
 	file = fopen(filename, "r");
 	if (file == NULL) {
@@ -383,7 +358,7 @@ void read_randomly(const char *filename, BYTES remaining_bytes, BYTES lower_read
 	}
 	BYTES size = get_file_size(file);
 
-	__nsec start, end, time_ms;
+	__nsec start, end;
 
 	start = ukplat_monotonic_clock();
 
@@ -403,7 +378,5 @@ void read_randomly(const char *filename, BYTES remaining_bytes, BYTES lower_read
 
 	fclose(file);
 
-	time_ms = ukarch_time_nsec_to_msec(end - start);
-
-	printf("Random reading of %llu megabytes took: %ldms %.3fs \n", megabytes_to_read, time_ms, (double) time_ms / 1000);
+    return end - start;
 }
