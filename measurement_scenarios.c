@@ -235,7 +235,6 @@ __nsec write_seq_malloc(BYTES bytes) {
     3. Repeats steps 1-2 until the 'remeaining_bytes' amount of bytes is written.
 */
 __nsec write_randomly(const char *filename, BYTES remeaining_bytes, BYTES lower_write_limit, BYTES upper_write_limit) {
-    // TODO: set seed = time
 	FILE *file;
 	file = fopen(filename, "r+");
 	if (file == NULL) {
@@ -314,7 +313,7 @@ __nsec read_seq(BYTES bytes) {
 	}
 	
 	for (BYTES i = 0; i < B_TO_KB(bytes); i++) {
-		if (buffer_size != fread(buffer, sizeof(char), buffer_size, file)) { //TODO: always false?
+		if (buffer_size != fread(buffer, sizeof(char), buffer_size, file)) {
 			fprintf(stderr, "Failed to read on iteration #%llu\n", i);
 		}
 	}
@@ -323,7 +322,6 @@ __nsec read_seq(BYTES bytes) {
 			fprintf(stderr, "Failed to read the rest of the file\n");
 		}
 	}
-    // TODO: read the rest (if bytes % 1024 != 0)
 
 	end = ukplat_monotonic_clock();
 

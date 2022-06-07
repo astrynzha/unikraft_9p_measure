@@ -184,7 +184,7 @@ void write_randomly_runner(const char *filename, BYTES bytes, BYTES lower_write_
     for (int i = 0; i < measurements; i++) {
         printf("Measurement %d/%d running...\n", i, measurements);
 
-        srand(time(NULL));
+        srand(time(NULL)); // setting random seed
         result = write_randomly(filename, bytes, lower_write_limit, upper_write_limit);
         result_ms = ukarch_time_nsec_to_msec(result); 
         printf("Result: %ldms %.3fs\n", result_ms, (double) result_ms / 1000);
@@ -256,7 +256,6 @@ void read_seq_existing_runner(const char *filename, int measurements) {
 }
 
 void read_randomly_runner(const char *filename, BYTES bytes, BYTES lower_read_limit, BYTES upper_read_limit, int measurements) {
-    // TODO: set srand
     __nsec total = 0;
 
     printf("###########################\n");
@@ -268,7 +267,7 @@ void read_randomly_runner(const char *filename, BYTES bytes, BYTES lower_read_li
     for (int i = 0; i < measurements; i++) {
         printf("Measurement %d/%d running...\n", i, measurements);
 
-        srand(time(NULL));
+        srand(time(NULL)); // setting random seed
         result = read_randomly(filename, bytes, lower_read_limit, upper_read_limit);
         result_ms = ukarch_time_nsec_to_msec(result); 
         printf("Result: %ldms %.3fs\n", result_ms, (double) result_ms / 1000);
