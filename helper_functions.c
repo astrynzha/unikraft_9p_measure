@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h> // TODO: where is it included from?
+#include <string.h>
 
 BYTES get_file_size(FILE *file) {
 	fseek(file, 0L, SEEK_END);
@@ -69,10 +69,10 @@ void write_bytes(FILE *file, BYTES bytes) {
     Initializing file names of kind: "file_0", "file_1", "file_2" and so on
 
 */
-void init_filenames(int file_amount, int file_name_reserved_length, char file_names[][file_name_reserved_length]) {
+void init_filenames(int file_amount, int max_filename_length, char *file_names) {
 	for (int i = 0; i < file_amount; i++) {
 		char suffix[7 + DIGITS(i)];
 		sprintf(suffix, "file_%d", i);
-		strcpy(file_names[i], suffix);
+		strcpy(file_names + i*max_filename_length, suffix);
 	}
 }

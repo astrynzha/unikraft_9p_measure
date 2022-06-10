@@ -1,9 +1,10 @@
 #include "measurement_scenarios.h"
 #include "helper_functions.h"
 
-#include <uk/plat/time.h> // TODO: how does the build system find this path?
+#include <uk/plat/time.h>
 #include <dirent.h>
 #include <stdlib.h>
+#include <string.h>
 
 
 /*
@@ -14,16 +15,18 @@
 __nsec create_files(int amount) {
 	__nsec start, end;
 
+	// initializing file names 
+
     int max_file_name_length = 7 + DIGITS(amount - 1);
-	char file_names[amount][max_file_name_length]; 
-    init_filenames(amount, max_file_name_length, file_names);
+	char *file_names = (char*) malloc(amount*max_file_name_length); // 2D array
+	init_filenames(amount, max_file_name_length, file_names);
 
     // measuring the creation of `amount` files
 
 	start = ukplat_monotonic_clock();
 
 	for (int i = 0; i < amount; i++) {
-		FILE *file = fopen(file_names[i], "w");
+		FILE *file = fopen(file_names + i * max_file_name_length, "w");
 	    if (file == NULL) {
             fprintf(stderr, "Error creating file number %d.\n", i);
             exit(EXIT_FAILURE);
@@ -36,8 +39,9 @@ __nsec create_files(int amount) {
     // cleaning up: deleting all files
 
 	for (int i = 0; i < amount; i++) {
-		if (remove(file_names[i]) != 0) {
-			fprintf(stderr, "Failed to remove \"%s\" file\n", file_names[i]);
+		char *file_name = file_names + i * max_file_name_length;
+		if (remove(file_name) != 0) {
+			fprintf(stderr, "Failed to remove \"%s\" file\n", file_name);
 		}
 	}
 
@@ -52,14 +56,16 @@ __nsec create_files(int amount) {
 __nsec remove_files(int amount) {
     __nsec start, end;
 
+	// initializing file names
+
     int max_file_name_length = 7 + DIGITS(amount - 1);
-	char file_names[amount][max_file_name_length]; 
-    init_filenames(amount, max_file_name_length, file_names);
+	char *file_names = (char*) malloc(amount*max_file_name_length); // 2D array
+	init_filenames(amount, max_file_name_length, file_names);
 
     // creating `amount` empty files
 
 	for (int i = 0; i < amount; i++) {
-		FILE *file = fopen(file_names[i], "w");
+		FILE *file = fopen(file_names + i*max_file_name_length, "w");
 	    if (file == NULL) {
             fprintf(stderr, "Error creating file number %d.\n", i);
             exit(EXIT_FAILURE);
@@ -71,8 +77,9 @@ __nsec remove_files(int amount) {
 
 	start = ukplat_monotonic_clock();
 	for (int i = 0; i < amount; i++) {
-		if (remove(file_names[i]) != 0) {
-			fprintf(stderr, "Failed to remove \"%s\" file\n", file_names[i]);
+		char *file_name = file_names + i * max_file_name_length;
+		if (remove(file_name) != 0) {
+			fprintf(stderr, "Failed to remove \"%s\" file\n", file_name);
 		}
 	}
 	end = ukplat_monotonic_clock();
@@ -89,20 +96,18 @@ __nsec list_dir(int file_amount) {
 	__nsec start, end;
 
     int max_file_name_length = 7 + DIGITS(file_amount - 1);
-	char file_names[file_amount][max_file_name_length]; 
-    init_filenames(file_amount, max_file_name_length, file_names);
+	char *file_names = (char*) malloc(file_amount*max_file_name_length); // 2D array
+	init_filenames(file_amount, max_file_name_length, file_names);
 
     // creating files
 	for (int i = 0; i < file_amount; i++) {
-		FILE *file = fopen(file_names[i], "w");
+		FILE *file = fopen(file_names + i*max_file_name_length, "w");
 	    if (file == NULL) {
             fprintf(stderr, "Error creating file number %d.\n", i);
             exit(EXIT_FAILURE);
         }
 		fclose(file);
 	}
-
-    FILE *dummy_output = fopen("dummy", "w");
 
     // listing files
 
@@ -115,8 +120,9 @@ __nsec list_dir(int file_amount) {
 		fprintf(stderr, "Couldn't open the directory\n");
     }
 
+	char str[256];
     while (ep = readdir (dp)) {
-        fprintf(dummy_output, ep->d_name);
+		strcpy(str, ep->d_name); // using filenames somehow
     }
 
     (void) closedir (dp);
@@ -125,12 +131,9 @@ __nsec list_dir(int file_amount) {
 
     // deleting all created files
 
-    fclose(dummy_output);
-    remove("dummy");
-
 	for (int i = 0; i < file_amount; i++) {
-		if (remove(file_names[i]) != 0) {
-			fprintf(stderr, "Failed to remove \"%s\" file\n", file_names[i]);
+		if (remove(file_names + i*max_file_name_length) != 0) {
+			fprintf(stderr, "Failed to remove \"%s\" file\n", file_names + i*max_file_name_length);
 		}
 	}
 
@@ -150,7 +153,7 @@ __nsec write_seq(BYTES bytes) {
 		exit(EXIT_FAILURE);
 	}
 
-	BYTES buffer_size = KB(1); // TODO: warum kann buffer nicht beliebig gross werden?
+	BYTES buffer_size = KB(1);
 	char buffer[buffer_size];
 
 	for (BYTES i = 0; i < buffer_size; i++) {
@@ -273,7 +276,7 @@ __nsec write_randomly(const char *filename, BYTES remeaining_bytes, BYTES lower_
 */
 __nsec read_seq(BYTES bytes) {
 	FILE *file;
-	BYTES buffer_size = KB(1); // TODO: warum kann buffer nicht beliebig gross werden?
+	BYTES buffer_size = KB(1);
     BYTES rest = bytes % buffer_size;
 	char buffer[buffer_size];
 
@@ -303,10 +306,12 @@ __nsec read_seq(BYTES bytes) {
 
     // measuring sequential read
 
+	// TODO: flush cache
+
 	__nsec start, end;
 
 	start = ukplat_monotonic_clock();
-	file = fopen(filename, "r");
+	file = fopen(filename, "r"); // TODO: rausnehmen
 	if (file == NULL) {
 		fprintf(stderr, "On read: error opening file '%s'.\n", filename);
 		exit(EXIT_FAILURE);
@@ -348,7 +353,7 @@ __nsec read_seq_existing(const char *filename) {
 		exit(EXIT_FAILURE);
 	}
 
-	BYTES buffer_size = 1024; // TODO: warum kann buffer nicht beliebig gross werden?
+	BYTES buffer_size = KB(1);
 	char buffer[buffer_size];
 
 	BYTES size = get_file_size(file);

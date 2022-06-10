@@ -1,6 +1,6 @@
 #include "scenario_runners.h"
 
-#include <uk/plat/time.h> // TODO: how does the build system find this path?
+#include <uk/plat/time.h>
 
 #include <time.h>
 #include <stdlib.h>
@@ -13,7 +13,7 @@
 */
 FILE *create_file_of_size(const char *filename, BYTES bytes) {
 	FILE *file;
-	BYTES buffer_size = KB(1); // TODO: warum kann buffer nicht beliebig gross werden?
+	BYTES buffer_size = KB(1);
 	char buffer[buffer_size];
 
 	for (BYTES i = 0; i < buffer_size; i++) {
@@ -53,7 +53,7 @@ void create_files_runner(int amount, int measurements) {
     __nsec result_ms;
 
     for (int i = 0; i < measurements; i++) {
-        printf("Measurement %d/%d running...\n", i, measurements);
+        printf("Measurement %d/%d running...\n", i + 1, measurements);
 
         result = create_files(amount);
         result_ms = ukarch_time_nsec_to_msec(result); 
@@ -79,7 +79,7 @@ void remove_files_runner(int amount, int measurements) {
     __nsec result_ms;
 
     for (int i = 0; i < measurements; i++) {
-        printf("Measurement %d/%d running...\n", i, measurements);
+        printf("Measurement %d/%d running...\n", i + 1, measurements);
 
         result = remove_files(amount);
         result_ms = ukarch_time_nsec_to_msec(result); 
@@ -105,7 +105,7 @@ void list_dir_runner(int file_amount, int measurements) {
     __nsec result_ms;
 
     for (int i = 0; i < measurements; i++) {
-        printf("Measurement %d/%d running...\n", i, measurements);
+        printf("Measurement %d/%d running...\n", i + 1, measurements);
 
         result = list_dir(file_amount);
         result_ms = ukarch_time_nsec_to_msec(result); 
@@ -132,7 +132,7 @@ void write_seq_runner(BYTES bytes, int measurements) {
     __nsec result_ms;
 
     for (int i = 0; i < measurements; i++) {
-        printf("Measurement %d/%d running...\n", i, measurements);
+        printf("Measurement %d/%d running...\n", i + 1, measurements);
 
         result = write_seq(bytes);
         result_ms = ukarch_time_nsec_to_msec(result); 
@@ -157,7 +157,7 @@ void write_seq_malloc_runner(BYTES bytes, int measurements) {
     __nsec result_ms;
 
     for (int i = 0; i < measurements; i++) {
-        printf("Measurement %d/%d running...\n", i, measurements);
+        printf("Measurement %d/%d running...\n", i + 1, measurements);
 
         result = write_seq_malloc(bytes);
         result_ms = ukarch_time_nsec_to_msec(result); 
@@ -182,7 +182,7 @@ void write_randomly_runner(const char *filename, BYTES bytes, BYTES lower_write_
     __nsec result_ms;
 
     for (int i = 0; i < measurements; i++) {
-        printf("Measurement %d/%d running...\n", i, measurements);
+        printf("Measurement %d/%d running...\n", i + 1, measurements);
 
         srand(time(NULL)); // setting random seed
         result = write_randomly(filename, bytes, lower_write_limit, upper_write_limit);
@@ -209,7 +209,7 @@ void read_seq_runner(BYTES bytes, int measurements) {
     __nsec result_ms;
 
     for (int i = 0; i < measurements; i++) {
-        printf("Measurement %d/%d running...\n", i, measurements);
+        printf("Measurement %d/%d running...\n", i + 1, measurements);
 
         result = read_seq(bytes);
         result_ms = ukarch_time_nsec_to_msec(result); 
@@ -239,7 +239,7 @@ void read_seq_existing_runner(const char *filename, int measurements) {
     __nsec result_ms;
 
     for (int i = 0; i < measurements; i++) {
-        printf("Measurement %d/%d running...\n", i, measurements);
+        printf("Measurement %d/%d running...\n", i + 1, measurements);
 
         result = read_seq_existing(filename);
         result_ms = ukarch_time_nsec_to_msec(result); 
@@ -265,7 +265,7 @@ void read_randomly_runner(const char *filename, BYTES bytes, BYTES lower_read_li
     __nsec result_ms;
 
     for (int i = 0; i < measurements; i++) {
-        printf("Measurement %d/%d running...\n", i, measurements);
+        printf("Measurement %d/%d running...\n", i + 1, measurements);
 
         srand(time(NULL)); // setting random seed
         result = read_randomly(filename, bytes, lower_read_limit, upper_read_limit);

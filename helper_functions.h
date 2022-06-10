@@ -21,6 +21,6 @@ BYTES get_file_size(FILE *file);
 BYTES sample_in_range(BYTES lower, BYTES upper);
 void read_bytes(FILE *file, BYTES bytes);
 void write_bytes(FILE *file, BYTES bytes);
-void init_filenames(int file_amount, int file_name_reserved_length, char file_names[][file_name_reserved_length]);
+void init_filenames(int file_amount, int max_filename_length, char *file_names);
 
 #endif

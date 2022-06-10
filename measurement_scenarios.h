@@ -2,7 +2,7 @@
 #define MEASUREMENT_SCENARIOS_H
 
 #include <stdio.h>
-#include <uk/plat/time.h> // TODO: how does the build system find this path?
+#include <uk/plat/time.h>
 
 #include "helper_functions.h"
 
