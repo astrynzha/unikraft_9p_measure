@@ -12,7 +12,7 @@
 
     Necessary files are created and deleted by the function.
 */
-__nsec create_files(int amount) {
+__nsec create_files(FILES amount) {
 	__nsec start, end;
 
 	// initializing file names 
@@ -25,10 +25,10 @@ __nsec create_files(int amount) {
 
 	start = ukplat_monotonic_clock();
 
-	for (int i = 0; i < amount; i++) {
+	for (FILES i = 0; i < amount; i++) {
 		FILE *file = fopen(file_names + i * max_file_name_length, "w");
 	    if (file == NULL) {
-            fprintf(stderr, "Error creating file number %d.\n", i);
+            fprintf(stderr, "Error creating file number %lu.\n", i);
             exit(EXIT_FAILURE);
         }
 		fclose(file);
@@ -38,7 +38,7 @@ __nsec create_files(int amount) {
 
     // cleaning up: deleting all files
 
-	for (int i = 0; i < amount; i++) {
+	for (FILES i = 0; i < amount; i++) {
 		char *file_name = file_names + i * max_file_name_length;
 		if (remove(file_name) != 0) {
 			fprintf(stderr, "Failed to remove \"%s\" file\n", file_name);
@@ -53,7 +53,7 @@ __nsec create_files(int amount) {
 
     Necessary files are created and deleted by the function.
 */
-__nsec remove_files(int amount) {
+__nsec remove_files(FILES amount) {
     __nsec start, end;
 
 	// initializing file names
@@ -64,10 +64,10 @@ __nsec remove_files(int amount) {
 
     // creating `amount` empty files
 
-	for (int i = 0; i < amount; i++) {
+	for (FILES i = 0; i < amount; i++) {
 		FILE *file = fopen(file_names + i*max_file_name_length, "w");
 	    if (file == NULL) {
-            fprintf(stderr, "Error creating file number %d.\n", i);
+            fprintf(stderr, "Error creating file number %lu.\n", i);
             exit(EXIT_FAILURE);
         }
 		fclose(file);
@@ -76,7 +76,7 @@ __nsec remove_files(int amount) {
     // measuring the delition of `amount` files
 
 	start = ukplat_monotonic_clock();
-	for (int i = 0; i < amount; i++) {
+	for (FILES i = 0; i < amount; i++) {
 		char *file_name = file_names + i * max_file_name_length;
 		if (remove(file_name) != 0) {
 			fprintf(stderr, "Failed to remove \"%s\" file\n", file_name);
@@ -88,28 +88,13 @@ __nsec remove_files(int amount) {
 }
 
 /*
-    Measure listing (e.g. ls command) of `file_amount` files.
+    Measure listing (e.g. ls command) of files. 'file_amount'
+	specifies how many files are in the directory.
 
-    Necessary files are created and deleted by the function.
+    Necessary files are to be created and deleted by the caller
 */
-__nsec list_dir(int file_amount) {
+__nsec list_dir(FILES file_amount) {
 	__nsec start, end;
-
-    int max_file_name_length = 7 + DIGITS(file_amount - 1);
-	char *file_names = (char*) malloc(file_amount*max_file_name_length); // 2D array
-	init_filenames(file_amount, max_file_name_length, file_names);
-
-    // creating files
-	for (int i = 0; i < file_amount; i++) {
-		FILE *file = fopen(file_names + i*max_file_name_length, "w");
-	    if (file == NULL) {
-            fprintf(stderr, "Error creating file number %d.\n", i);
-            exit(EXIT_FAILURE);
-        }
-		fclose(file);
-	}
-
-    // listing files
 
 	start = ukplat_monotonic_clock();
 
@@ -121,21 +106,23 @@ __nsec list_dir(int file_amount) {
     }
 
 	char str[256];
-    while (ep = readdir (dp)) {
+	FILES file_count = 0;
+    while ( (ep = readdir (dp)) ) {
 		strcpy(str, ep->d_name); // using filenames somehow
+		// TODO: add to debug;
+		// file_count++; 
     }
-
     (void) closedir (dp);
 
 	end = ukplat_monotonic_clock();
 
-    // deleting all created files
-
-	for (int i = 0; i < file_amount; i++) {
-		if (remove(file_names + i*max_file_name_length) != 0) {
-			fprintf(stderr, "Failed to remove \"%s\" file\n", file_names + i*max_file_name_length);
-		}
+	// TODO: add to debug or as an assertion. Or maybe just delete
+	/*
+	file_amount += 2; // including "./" and "../" entries
+	if (file_amount != file_count) {
+		fprintf(stderr, "ERROR: Directory contains %lu files. %lu was expected.\n", file_count, file_amount);
 	}
+	*/
 
     return end - start;
 }
