@@ -214,10 +214,14 @@ __nsec write_randomly(FILE *file, BYTES remaining_bytes, BYTES buffer_size, BYTE
 
     File is first created by the function, read and then deleted.
 */
-__nsec read_seq(FILE *file, BYTES bytes) {
-	BYTES buffer_size = KB(1);
+__nsec read_seq(FILE *file, BYTES bytes, BYTES buffer_size) {
+	BYTES iterations = bytes / buffer_size;
     BYTES rest = bytes % buffer_size;
-	char buffer[buffer_size];
+	char *buffer = malloc(buffer_size);
+	if (buffer == NULL) {
+		fprintf(stderr, "Error! Memory not allocated. At %s, line %d. \n", __FILE__, __LINE__);
+		exit(EXIT_FAILURE);
+	} 
 
     // measuring sequential read
 
@@ -225,7 +229,7 @@ __nsec read_seq(FILE *file, BYTES bytes) {
 
 	start = ukplat_monotonic_clock();
 	
-	for (BYTES i = 0; i < B_TO_KB(bytes); i++) {
+	for (BYTES i = 0; i < iterations; i++) {
 		if (buffer_size != fread(buffer, sizeof(char), buffer_size, file)) {
 			fprintf(stderr, "Failed to read on iteration #%llu\n", i);
 		}
@@ -238,7 +242,7 @@ __nsec read_seq(FILE *file, BYTES bytes) {
 
 	end = ukplat_monotonic_clock();
 
-
+	free(buffer);
     return end - start;
 }
 

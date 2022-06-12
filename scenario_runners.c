@@ -165,9 +165,10 @@ void write_randomly_runner(const char *filename, BYTES bytes, BYTES buffer_size,
 	fclose(file);
 }
 
-void read_seq_runner(BYTES bytes, int measurements) {
-    char filename[] = "write_data";
-	create_file_of_size(filename, bytes);
+/*
+    'bytes' has to be less than file size.
+*/
+void read_seq_runner(const char *filename, BYTES bytes, BYTES buffer_size, int measurements) {
     FILE *file = fopen(filename, "r");
 
     printf("###########################\n");
@@ -182,7 +183,7 @@ void read_seq_runner(BYTES bytes, int measurements) {
 
         // TODO: flush cache
         rewind(file);
-        result = read_seq(file, bytes);
+        result = read_seq(file, bytes, buffer_size);
         result_ms = ukarch_time_nsec_to_msec(result); 
         printf("Result: %ldms %.3fs\n", result_ms, (double) result_ms / 1000);
 
@@ -192,7 +193,7 @@ void read_seq_runner(BYTES bytes, int measurements) {
     total /= measurements;
     __nsec total_ms = ukarch_time_nsec_to_msec(total);
     printf("%d measurements successfully conducted\n", measurements);
-	printf("Reading %llu megabytes took on average: %ldms %.3fs \n", B_TO_MB(bytes), total_ms, (double) total_ms / 1000);
+	printf("Reading %lluMB with %lluB buffer took on average: %ldms %.3fs \n", B_TO_MB(bytes), buffer_size, total_ms, (double) total_ms / 1000);
     
     // cleaning up & removing the created file
 
