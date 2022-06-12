@@ -20,7 +20,7 @@ typedef unsigned long FILES;
 
 BYTES get_file_size(FILE *file);
 BYTES sample_in_range(BYTES lower, BYTES upper);
-void read_bytes(FILE *file, BYTES bytes);
+void read_bytes(FILE *file, BYTES bytes, BYTES buffer_size);
 void write_bytes(FILE *file, BYTES bytes, BYTES buffer_size);
 void init_filenames(FILES file_amount, int max_filename_length, char *file_names);
 

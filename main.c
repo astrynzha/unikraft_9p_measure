@@ -16,9 +16,9 @@ int main(int argc, char *argv[])
 	// create_files_runner(5000, 4);
 	// remove_files_runner(5000, 4);
 
-	// read_randomly_runner("data_100M", MB(100), MB(0.1), MB(1), 4);
+	read_randomly_runner("data_100M", MB(100), 64, MB(0.1), MB(1), 4);
 	// read_seq_existing_runner("data_100M", 4);
-	read_seq_runner("data_100M", MB(50), MB(5), 4);	
+	read_seq_runner("data_100M", MB(100), 64, 4);	
 
 	// write_randomly_runner("data_100M", MB(50), MB(5), MB(0.1), MB(1), 4);
 	// write_seq_runner(MB(50), MB(5), 4);

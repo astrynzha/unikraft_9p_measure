@@ -290,7 +290,7 @@ __nsec read_seq_existing(FILE *file) {
     
     File is provided by the caller.
 */
-__nsec read_randomly(FILE *file, BYTES remaining_bytes, BYTES lower_read_limit, BYTES upper_read_limit) {
+__nsec read_randomly(FILE *file, BYTES remaining_bytes, BYTES buffer_size, BYTES lower_read_limit, BYTES upper_read_limit) {
 	BYTES size = get_file_size(file);
 
 	__nsec start, end;
@@ -302,12 +302,12 @@ __nsec read_randomly(FILE *file, BYTES remaining_bytes, BYTES lower_read_limit, 
 		position = (long int) sample_in_range(0, size - upper_read_limit);
 		fseek(file, position, SEEK_SET);
 		BYTES bytes_to_read = sample_in_range(lower_read_limit, upper_read_limit);
-		read_bytes(file, bytes_to_read);
+		read_bytes(file, bytes_to_read, buffer_size);
 		remaining_bytes -= bytes_to_read;
 	}
 	position = sample_in_range(0, size - upper_read_limit);
 	fseek(file, position, SEEK_SET);
-	read_bytes(file, remaining_bytes);
+	read_bytes(file, remaining_bytes, buffer_size);
 
 	end = ukplat_monotonic_clock();
 

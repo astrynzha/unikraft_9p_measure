@@ -194,13 +194,6 @@ void read_seq_runner(const char *filename, BYTES bytes, BYTES buffer_size, int m
     __nsec total_ms = ukarch_time_nsec_to_msec(total);
     printf("%d measurements successfully conducted\n", measurements);
 	printf("Reading %lluMB with %lluB buffer took on average: %ldms %.3fs \n", B_TO_MB(bytes), buffer_size, total_ms, (double) total_ms / 1000);
-    
-    // cleaning up & removing the created file
-
-	fclose(file);
-	if (!remove(filename) == 0) {
-		fprintf(stderr, "Failed to remove \"%s\" file\n", filename);
-	}
 }
 
 void read_seq_existing_runner(const char *filename, int measurements) {
@@ -236,7 +229,7 @@ void read_seq_existing_runner(const char *filename, int measurements) {
     fclose(file);
 }
 
-void read_randomly_runner(const char *filename, BYTES bytes, BYTES lower_read_limit, BYTES upper_read_limit, int measurements) {
+void read_randomly_runner(const char *filename, BYTES bytes, BYTES buffer_size, BYTES lower_read_limit, BYTES upper_read_limit, int measurements) {
 	FILE *file;
 	file = fopen(filename, "r");
 	if (file == NULL) {
@@ -255,7 +248,7 @@ void read_randomly_runner(const char *filename, BYTES bytes, BYTES lower_read_li
         printf("Measurement %d/%d running...\n", i + 1, measurements);
 
         srand(time(NULL)); // setting random seed
-        result = read_randomly(file, bytes, lower_read_limit, upper_read_limit);
+        result = read_randomly(file, bytes, buffer_size, lower_read_limit, upper_read_limit);
         result_ms = ukarch_time_nsec_to_msec(result); 
         printf("Result: %ldms %.3fs\n", result_ms, (double) result_ms / 1000);
 
@@ -266,7 +259,8 @@ void read_randomly_runner(const char *filename, BYTES bytes, BYTES lower_read_li
     __nsec total_ms = ukarch_time_nsec_to_msec(total);
 
     printf("%d measurements successfully conducted\n", measurements);
-	printf("Reading %llu megabytes took on average: %ldms %.3fs \n", B_TO_MB(bytes), total_ms, (double) total_ms / 1000);
+	printf("Reading %lluMB with a buffer of %lluB took on average: %ldms %.3fs \n", 
+        B_TO_MB(bytes), buffer_size, total_ms, (double) total_ms / 1000);
 
 	fclose(file);
 }
