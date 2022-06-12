@@ -106,7 +106,8 @@ __nsec list_dir(FILES file_amount) {
     }
 
 	char str[256];
-	FILES file_count = 0;
+	// TODO: add to debug:
+	// FILES file_count = 0;
     while ( (ep = readdir (dp)) ) {
 		strcpy(str, ep->d_name); // using filenames somehow
 		// TODO: add to debug;
@@ -189,17 +190,23 @@ __nsec write_seq_malloc(BYTES bytes) {
 		exit(0);
 	} 
 
-	__nsec start, end;
-	start = ukplat_monotonic_clock();
-
 	file = fopen("/write_data", "w");
 	if (file == NULL) {
 		fprintf(stderr, "Error opening file '/write_data'.\n");
 		exit(EXIT_FAILURE);
 	}	
 
+	__nsec start, end;
+	start = ukplat_monotonic_clock();
+
 	for (BYTES i = 0; i < B_TO_KB(bytes); i++) {
 		fwrite(buffer, buffer_size, 1, file);
+	}
+    BYTES rest = bytes % buffer_size;
+	if (rest > 0) {
+		if (rest != fwrite(buffer, sizeof(char), rest, file)) {
+			fprintf(stderr, "Failed to write the rest of the file\n");
+		}
 	}
 
 	end = ukplat_monotonic_clock();
@@ -224,13 +231,7 @@ __nsec write_seq_malloc(BYTES bytes) {
     2. Writes a random amount of bytes, sampled from range [lower_write_limit, upper_write_limit].
     3. Repeats steps 1-2 until the 'remeaining_bytes' amount of bytes is written.
 */
-__nsec write_randomly(const char *filename, BYTES remeaining_bytes, BYTES lower_write_limit, BYTES upper_write_limit) {
-	FILE *file;
-	file = fopen(filename, "r+");
-	if (file == NULL) {
-		fprintf(stderr, "Error opening file '%s'.\n", filename);
-		exit(EXIT_FAILURE);
-	}
+__nsec write_randomly(FILE *file, BYTES remeaining_bytes, BYTES lower_write_limit, BYTES upper_write_limit) {
 	BYTES size = get_file_size(file);
 
 	__nsec start, end;
@@ -251,8 +252,6 @@ __nsec write_randomly(const char *filename, BYTES remeaining_bytes, BYTES lower_
 
 	end = ukplat_monotonic_clock();
 
-	fclose(file);
-
     return end - start;
 }
 
@@ -261,48 +260,16 @@ __nsec write_randomly(const char *filename, BYTES remeaining_bytes, BYTES lower_
 
     File is first created by the function, read and then deleted.
 */
-__nsec read_seq(BYTES bytes) {
-	FILE *file;
+__nsec read_seq(FILE *file, BYTES bytes) {
 	BYTES buffer_size = KB(1);
     BYTES rest = bytes % buffer_size;
 	char buffer[buffer_size];
 
-	for (BYTES i = 0; i < buffer_size; i++) {
-		buffer[i] = 'X';
-	}
-
-    // creating a file
-
-    char *filename = "read_data";
-	file = fopen(filename, "w");
-	if (file == NULL) {
-		fprintf(stderr, "On write: error opening file '%s'.\n", filename);
-		exit(EXIT_FAILURE);
-	}
-
-	for (BYTES i = 0; i < B_TO_KB(bytes); i++) {
-		fwrite(buffer, sizeof(char), buffer_size, file);
-	}
-	if (rest > 0) {
-		if (rest != fwrite(buffer, sizeof(char), rest, file)) {
-			fprintf(stderr, "Failed to write the rest of the file\n");
-		}
-	}
-	
-	fclose(file);
-
     // measuring sequential read
-
-	// TODO: flush cache
 
 	__nsec start, end;
 
 	start = ukplat_monotonic_clock();
-	file = fopen(filename, "r"); // TODO: rausnehmen
-	if (file == NULL) {
-		fprintf(stderr, "On read: error opening file '%s'.\n", filename);
-		exit(EXIT_FAILURE);
-	}
 	
 	for (BYTES i = 0; i < B_TO_KB(bytes); i++) {
 		if (buffer_size != fread(buffer, sizeof(char), buffer_size, file)) {
@@ -317,11 +284,6 @@ __nsec read_seq(BYTES bytes) {
 
 	end = ukplat_monotonic_clock();
 
-	fclose(file);
-
-	if (!remove(filename) == 0) {
-		fprintf(stderr, "Failed to remove \"%s\" file\n", filename);
-	}
 
     return end - start;
 }
@@ -332,14 +294,7 @@ __nsec read_seq(BYTES bytes) {
 
     The file is provided by the caller and not deleted in the end.
 */
-__nsec read_seq_existing(const char *filename) {
-	FILE *file;
-	file = fopen(filename, "r");
-	if (file == NULL) {
-		fprintf(stderr, "Error opening file '%s'.\n", filename);
-		exit(EXIT_FAILURE);
-	}
-
+__nsec read_seq_existing(FILE *file) {
 	BYTES buffer_size = KB(1);
 	char buffer[buffer_size];
 
@@ -364,8 +319,6 @@ __nsec read_seq_existing(const char *filename) {
 
 	end = ukplat_monotonic_clock();
 
-	fclose(file);
-
     return end - start;
 }
 
@@ -379,13 +332,7 @@ __nsec read_seq_existing(const char *filename) {
     
     File is provided by the caller.
 */
-__nsec read_randomly(const char *filename, BYTES remaining_bytes, BYTES lower_read_limit, BYTES upper_read_limit) {
-	FILE *file;
-	file = fopen(filename, "r");
-	if (file == NULL) {
-		fprintf(stderr, "Error opening file '%s'.\n", filename);
-		exit(EXIT_FAILURE);
-	}
+__nsec read_randomly(FILE *file, BYTES remaining_bytes, BYTES lower_read_limit, BYTES upper_read_limit) {
 	BYTES size = get_file_size(file);
 
 	__nsec start, end;
@@ -405,8 +352,6 @@ __nsec read_randomly(const char *filename, BYTES remaining_bytes, BYTES lower_re
 	read_bytes(file, remaining_bytes);
 
 	end = ukplat_monotonic_clock();
-
-	fclose(file);
 
     return end - start;
 }

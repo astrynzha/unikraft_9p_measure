@@ -8,49 +8,14 @@
 #include "helper_functions.h"
 #include "measurement_scenarios.h"
 
-/*
-    Creates a file, filled with 'X' charachters, of size `bytes`, with a given filename
-*/
-FILE *create_file_of_size(const char *filename, BYTES bytes) {
-	FILE *file;
-	BYTES buffer_size = KB(1);
-	char buffer[buffer_size];
-
-	for (BYTES i = 0; i < buffer_size; i++) {
-		buffer[i] = 'X';
-	}
-
-	file = fopen(filename, "w");
-	if (file == NULL) {
-		fprintf(stderr, "Error opening file '%s'.\n", filename);
-		exit(EXIT_FAILURE);
-	}
-
-	for (BYTES i = 0; i < B_TO_KB(bytes); i++) {
-		fwrite(buffer, sizeof(char), buffer_size, file);
-	}
-    BYTES rest = bytes % buffer_size;
-    if (rest > 0) {
-		if (rest != fwrite(buffer, sizeof(char), rest, file)) {
-			fprintf(stderr, "Failed to write the rest of the file\n");
-		}
-    }
-	
-	fclose(file);
-
-	printf("File %s of size %lluB created\n", filename, bytes);
-
-	return file;
-}
 
 void create_files_runner(FILES amount, int measurements) {
-    __nsec total = 0;
-
     printf("###########################\n");
     printf("Measuring creating %lu files\n", amount);
 
     __nsec result;
     __nsec result_ms;
+    __nsec total = 0;
 
     for (int i = 0; i < measurements; i++) {
         printf("Measurement %d/%d running...\n", i + 1, measurements);
@@ -70,13 +35,12 @@ void create_files_runner(FILES amount, int measurements) {
 }
 
 void remove_files_runner(FILES amount, int measurements) {
-    __nsec total = 0;
-
     printf("###########################\n");
     printf("Measuring removing %lu files\n", amount);
 
     __nsec result;
     __nsec result_ms;
+    __nsec total = 0;
 
     for (int i = 0; i < measurements; i++) {
         printf("Measurement %d/%d running...\n", i + 1, measurements);
@@ -96,29 +60,21 @@ void remove_files_runner(FILES amount, int measurements) {
 }
 
 void list_dir_runner(FILES file_amount, int measurements) {
-    __nsec total = 0;
-
     printf("###########################\n");
     printf("Measuring listing %lu files\n", file_amount);
 
     __nsec result;
     __nsec result_ms;
+    __nsec total = 0;
 
-    // initializing file names
+    // initializing files 
 
     int max_file_name_length = 7 + DIGITS(file_amount - 1);
 	char *file_names = (char*) malloc(file_amount*max_file_name_length); // 2D array
 	init_filenames(file_amount, max_file_name_length, file_names);
 
-    // creating files
-
 	for (FILES i = 0; i < file_amount; i++) {
-		FILE *file = fopen(file_names + i*max_file_name_length, "w");
-	    if (file == NULL) {
-            fprintf(stderr, "Error creating file number %lu.\n", i);
-            exit(EXIT_FAILURE);
-        }
-		fclose(file);
+        create_file_of_size(file_names + i*max_file_name_length, 0);
 	}
 
     // measuring 
@@ -150,13 +106,12 @@ void list_dir_runner(FILES file_amount, int measurements) {
 }
 
 void write_seq_runner(BYTES bytes, int measurements) {
-    __nsec total = 0;
-
     printf("###########################\n");
     printf("Measuring sequential write\n");
 
     __nsec result;
     __nsec result_ms;
+    __nsec total = 0;
 
     for (int i = 0; i < measurements; i++) {
         printf("Measurement %d/%d running...\n", i + 1, measurements);
@@ -176,12 +131,12 @@ void write_seq_runner(BYTES bytes, int measurements) {
 }
 
 void write_seq_malloc_runner(BYTES bytes, int measurements) {
-    __nsec total = 0;
     printf("###########################\n");
     printf("Measuring sequential write with malloc\n");
 
     __nsec result;
     __nsec result_ms;
+    __nsec total = 0;
 
     for (int i = 0; i < measurements; i++) {
         printf("Measurement %d/%d running...\n", i + 1, measurements);
@@ -201,18 +156,25 @@ void write_seq_malloc_runner(BYTES bytes, int measurements) {
 }
 
 void write_randomly_runner(const char *filename, BYTES bytes, BYTES lower_write_limit, BYTES upper_write_limit, int measurements) {
-    __nsec total = 0;
+	FILE *file;
+	file = fopen(filename, "r+");
+	if (file == NULL) {
+		fprintf(stderr, "Error opening file '%s'.\n", filename);
+		exit(EXIT_FAILURE);
+	}
+
     printf("###########################\n");
     printf("Measuring random-access write\n");
 
     __nsec result;
     __nsec result_ms;
+    __nsec total = 0;
 
     for (int i = 0; i < measurements; i++) {
         printf("Measurement %d/%d running...\n", i + 1, measurements);
 
         srand(time(NULL)); // setting random seed
-        result = write_randomly(filename, bytes, lower_write_limit, upper_write_limit);
+        result = write_randomly(file, bytes, lower_write_limit, upper_write_limit);
         result_ms = ukarch_time_nsec_to_msec(result); 
         printf("Result: %ldms %.3fs\n", result_ms, (double) result_ms / 1000);
 
@@ -224,21 +186,28 @@ void write_randomly_runner(const char *filename, BYTES bytes, BYTES lower_write_
 
     printf("%d measurements successfully conducted\n", measurements);
 	printf("Writing %llu non-sequentially took on average: %ldms %.3fs \n", B_TO_MB(bytes), total_ms, (double) total_ms / 1000);
+
+	fclose(file);
 }
 
 void read_seq_runner(BYTES bytes, int measurements) {
-    __nsec total = 0;
+    char filename[] = "write_data";
+	create_file_of_size(filename, bytes);
+    FILE *file = fopen(filename, "r");
 
     printf("###########################\n");
     printf("Measuring sequential read\n");
 
     __nsec result;
     __nsec result_ms;
+    __nsec total = 0;
 
     for (int i = 0; i < measurements; i++) {
         printf("Measurement %d/%d running...\n", i + 1, measurements);
 
-        result = read_seq(bytes);
+        // TODO: flush cache
+        rewind(file);
+        result = read_seq(file, bytes);
         result_ms = ukarch_time_nsec_to_msec(result); 
         printf("Result: %ldms %.3fs\n", result_ms, (double) result_ms / 1000);
 
@@ -247,28 +216,35 @@ void read_seq_runner(BYTES bytes, int measurements) {
 
     total /= measurements;
     __nsec total_ms = ukarch_time_nsec_to_msec(total);
-
     printf("%d measurements successfully conducted\n", measurements);
 	printf("Reading %llu megabytes took on average: %ldms %.3fs \n", B_TO_MB(bytes), total_ms, (double) total_ms / 1000);
+    
+    // cleaning up & removing the created file
+
+	fclose(file);
+	if (!remove(filename) == 0) {
+		fprintf(stderr, "Failed to remove \"%s\" file\n", filename);
+	}
 }
 
 void read_seq_existing_runner(const char *filename, int measurements) {
-    __nsec total = 0;
-
     FILE *file = fopen(filename, "r");
-    BYTES size = get_file_size(file);
-    fclose(file);
+    if (file == NULL) {
+		fprintf(stderr, "Error opening file '%s'.\n", filename);
+		exit(EXIT_FAILURE);
+    }
 
     printf("###########################\n");
-    printf("Measuring sequential read of %lluMB\n", B_TO_MB(size));
+    printf("Measuring sequential read of %lluMB\n", B_TO_MB(get_file_size(file)));
 
     __nsec result;
     __nsec result_ms;
+    __nsec total = 0;
 
     for (int i = 0; i < measurements; i++) {
         printf("Measurement %d/%d running...\n", i + 1, measurements);
 
-        result = read_seq_existing(filename);
+        result = read_seq_existing(file);
         result_ms = ukarch_time_nsec_to_msec(result); 
         printf("Result: %ldms %.3fs\n", result_ms, (double) result_ms / 1000);
 
@@ -279,23 +255,31 @@ void read_seq_existing_runner(const char *filename, int measurements) {
     __nsec total_ms = ukarch_time_nsec_to_msec(total);
 
     printf("%d measurements successfully conducted\n", measurements);
-	printf("Reading %llu megabytes took on average: %ldms %.3fs \n", B_TO_MB(size), total_ms, (double) total_ms / 1000);
+	printf("Reading %llu megabytes took on average: %ldms %.3fs \n", B_TO_MB(get_file_size(file)), total_ms, (double) total_ms / 1000);
+
+    fclose(file);
 }
 
 void read_randomly_runner(const char *filename, BYTES bytes, BYTES lower_read_limit, BYTES upper_read_limit, int measurements) {
-    __nsec total = 0;
+	FILE *file;
+	file = fopen(filename, "r");
+	if (file == NULL) {
+		fprintf(stderr, "Error opening file '%s'.\n", filename);
+		exit(EXIT_FAILURE);
+	}
 
     printf("###########################\n");
     printf("Measuring random-access read\n");
 
     __nsec result;
     __nsec result_ms;
+    __nsec total = 0;
 
     for (int i = 0; i < measurements; i++) {
         printf("Measurement %d/%d running...\n", i + 1, measurements);
 
         srand(time(NULL)); // setting random seed
-        result = read_randomly(filename, bytes, lower_read_limit, upper_read_limit);
+        result = read_randomly(file, bytes, lower_read_limit, upper_read_limit);
         result_ms = ukarch_time_nsec_to_msec(result); 
         printf("Result: %ldms %.3fs\n", result_ms, (double) result_ms / 1000);
 
@@ -308,5 +292,41 @@ void read_randomly_runner(const char *filename, BYTES bytes, BYTES lower_read_li
     printf("%d measurements successfully conducted\n", measurements);
 	printf("Reading %llu megabytes took on average: %ldms %.3fs \n", B_TO_MB(bytes), total_ms, (double) total_ms / 1000);
 
+	fclose(file);
 }
 
+/*
+    Creates a file, filled with 'X' charachters, of size `bytes`, with a given filename
+*/
+FILE *create_file_of_size(const char *filename, BYTES bytes) {
+	FILE *file;
+	BYTES buffer_size = KB(1);
+	char buffer[buffer_size];
+
+	for (BYTES i = 0; i < buffer_size; i++) {
+		buffer[i] = 'X';
+	}
+
+	file = fopen(filename, "w");
+	if (file == NULL) {
+		fprintf(stderr, "Error opening file '%s'.\n", filename);
+		exit(EXIT_FAILURE);
+	}
+
+	for (BYTES i = 0; i < B_TO_KB(bytes); i++) {
+		fwrite(buffer, sizeof(char), buffer_size, file);
+	}
+    BYTES rest = bytes % buffer_size;
+    if (rest > 0) {
+		if (rest != fwrite(buffer, sizeof(char), rest, file)) {
+			fprintf(stderr, "Failed to write the rest of the file\n");
+		}
+    }
+	
+	fclose(file);
+
+    // TODO: surround with debug guards
+	// printf("File %s of size %lluB created\n", filename, bytes);
+
+	return file;
+}
