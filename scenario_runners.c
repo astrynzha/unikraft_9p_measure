@@ -105,9 +105,9 @@ void list_dir_runner(FILES file_amount, int measurements) {
 
 }
 
-void write_seq_runner(BYTES bytes, int measurements) {
+void write_seq_runner(BYTES bytes, BYTES buffer_size, int measurements) {
     printf("###########################\n");
-    printf("Measuring sequential write\n");
+    printf("Measuring sequential write of %llu megabytes with a buffer of %lluB\n", B_TO_MB(bytes), buffer_size);
 
     __nsec result;
     __nsec result_ms;
@@ -116,7 +116,7 @@ void write_seq_runner(BYTES bytes, int measurements) {
     for (int i = 0; i < measurements; i++) {
         printf("Measurement %d/%d running...\n", i + 1, measurements);
 
-        result = write_seq(bytes);
+        result = write_seq(bytes, buffer_size);
         result_ms = ukarch_time_nsec_to_msec(result); 
         printf("Result: %ldms %.3fs\n", result_ms, (double) result_ms / 1000);
 
@@ -127,32 +127,7 @@ void write_seq_runner(BYTES bytes, int measurements) {
     __nsec total_ms = ukarch_time_nsec_to_msec(total);
 
     printf("%d measurements successfully conducted\n", measurements);
-	printf("Writing %llu megabytes took on average: %ldms %.3fs \n", B_TO_MB(bytes), total_ms, (double) total_ms / 1000);
-}
-
-void write_seq_malloc_runner(BYTES bytes, int measurements) {
-    printf("###########################\n");
-    printf("Measuring sequential write with malloc\n");
-
-    __nsec result;
-    __nsec result_ms;
-    __nsec total = 0;
-
-    for (int i = 0; i < measurements; i++) {
-        printf("Measurement %d/%d running...\n", i + 1, measurements);
-
-        result = write_seq_malloc(bytes);
-        result_ms = ukarch_time_nsec_to_msec(result); 
-        printf("Result: %ldms %.3fs\n", result_ms, (double) result_ms / 1000);
-
-        total += result;
-    }
-
-    total /= measurements;
-    __nsec total_ms = ukarch_time_nsec_to_msec(total);
-
-    printf("%d measurements successfully conducted\n", measurements);
-	printf("Writing %llu with malloc megabytes took on average: %ldms %.3fs \n", B_TO_MB(bytes), total_ms, (double) total_ms / 1000);
+	printf("Average result: %ldms %.3fs \n", total_ms, (double) total_ms / 1000);
 }
 
 void write_randomly_runner(const char *filename, BYTES bytes, BYTES lower_write_limit, BYTES upper_write_limit, int measurements) {

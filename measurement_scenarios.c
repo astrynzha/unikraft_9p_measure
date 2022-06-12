@@ -129,66 +129,21 @@ __nsec list_dir(FILES file_amount) {
 }
 
 /*
-    Measuring sequential write of `megabytes` megabytes.
-
-    File is created and deleted by the function.
-*/
-__nsec write_seq(BYTES bytes) {
-	FILE *file;
-	file = fopen("write_data", "w");
-	if (file == NULL) {
-		fprintf(stderr, "Error opening file 'write_data'.\n");
-		exit(EXIT_FAILURE);
-	}
-
-	BYTES buffer_size = KB(1);
-	char buffer[buffer_size];
-
-	for (BYTES i = 0; i < buffer_size; i++) {
-		buffer[i] = 'X';
-	}
-
-	__nsec start, end;
-
-	start = ukplat_monotonic_clock();
-
-	for (BYTES i = 0; i < B_TO_KB(bytes); i++) {
-		if (buffer_size != fwrite(buffer, sizeof(char), buffer_size, file)) {
-			fprintf(stderr, "Failed to write\n");
-		}
-	}
-    BYTES rest = bytes % buffer_size;
-	if (rest > 0) {
-		if (rest != fwrite(buffer, sizeof(char), rest, file)) {
-			fprintf(stderr, "Failed to write the rest of the file\n");
-		}
-	}
-
-	end = ukplat_monotonic_clock();
-
-	fclose(file);
-
-	if (!remove("write_data") == 0) {
-		fprintf(stderr, "Failed to remove \"write_data\" file\n");
-	}
-
-    return end - start;
-}
-
-/*
     Measuring sequential write with buffer on heap, allocated with malloc.
+	Buffer size can be set through 'buffer_size'.
     
-    File is created and deleted by the function
+    Write file is created and deleted by the function.
 */
-__nsec write_seq_malloc(BYTES bytes) {
+__nsec write_seq(BYTES bytes, BYTES buffer_size) {
 	FILE *file;
 
-	BYTES buffer_size = KB(1);
 	char *buffer = malloc(buffer_size);
 	if (buffer == NULL) {
 		fprintf(stderr, "Error! Memory not allocated.\n");
 		exit(0);
 	} 
+	BYTES iterations = bytes / buffer_size;
+	BYTES rest = bytes % buffer_size;
 
 	file = fopen("/write_data", "w");
 	if (file == NULL) {
@@ -199,10 +154,9 @@ __nsec write_seq_malloc(BYTES bytes) {
 	__nsec start, end;
 	start = ukplat_monotonic_clock();
 
-	for (BYTES i = 0; i < B_TO_KB(bytes); i++) {
+	for (BYTES i = 0; i < iterations; i++) {
 		fwrite(buffer, buffer_size, 1, file);
 	}
-    BYTES rest = bytes % buffer_size;
 	if (rest > 0) {
 		if (rest != fwrite(buffer, sizeof(char), rest, file)) {
 			fprintf(stderr, "Failed to write the rest of the file\n");
@@ -256,7 +210,7 @@ __nsec write_randomly(FILE *file, BYTES remeaining_bytes, BYTES lower_write_limi
 }
 
 /*
-    Measure sequential read of `megabytes` megabytes.
+    Measure sequential read of `bytes` bytes.
 
     File is first created by the function, read and then deleted.
 */
