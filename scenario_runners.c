@@ -43,11 +43,11 @@ FILE *create_file_of_size(const char *filename, BYTES bytes) {
 	return file;
 }
 
-void create_files_runner(int amount, int measurements) {
+void create_files_runner(FILES amount, int measurements) {
     __nsec total = 0;
 
     printf("###########################\n");
-    printf("Measuring creating %d files\n", amount);
+    printf("Measuring creating %lu files\n", amount);
 
     __nsec result;
     __nsec result_ms;
@@ -66,14 +66,14 @@ void create_files_runner(int amount, int measurements) {
     __nsec total_ms = ukarch_time_nsec_to_msec(total);
 
     printf("%d measurements successfully conducted\n", measurements);
-	printf("Creating %d files took on average: %ldms %.3fs \n", amount, total_ms, (double) total_ms / 1000);
+	printf("Creating %lu files took on average: %ldms %.3fs \n", amount, total_ms, (double) total_ms / 1000);
 }
 
-void remove_files_runner(int amount, int measurements) {
+void remove_files_runner(FILES amount, int measurements) {
     __nsec total = 0;
 
     printf("###########################\n");
-    printf("Measuring removing %d files\n", amount);
+    printf("Measuring removing %lu files\n", amount);
 
     __nsec result;
     __nsec result_ms;
@@ -92,17 +92,36 @@ void remove_files_runner(int amount, int measurements) {
     __nsec total_ms = ukarch_time_nsec_to_msec(total);
 
     printf("%d measurements successfully conducted\n", measurements);
-	printf("Removing %d files took on average: %ldms %.3fs \n", amount, total_ms, (double) total_ms / 1000);
+	printf("Removing %lu files took on average: %ldms %.3fs \n", amount, total_ms, (double) total_ms / 1000);
 }
 
-void list_dir_runner(int file_amount, int measurements) {
+void list_dir_runner(FILES file_amount, int measurements) {
     __nsec total = 0;
 
     printf("###########################\n");
-    printf("Measuring listing %d files\n", file_amount);
+    printf("Measuring listing %lu files\n", file_amount);
 
     __nsec result;
     __nsec result_ms;
+
+    // initializing file names
+
+    int max_file_name_length = 7 + DIGITS(file_amount - 1);
+	char *file_names = (char*) malloc(file_amount*max_file_name_length); // 2D array
+	init_filenames(file_amount, max_file_name_length, file_names);
+
+    // creating files
+
+	for (FILES i = 0; i < file_amount; i++) {
+		FILE *file = fopen(file_names + i*max_file_name_length, "w");
+	    if (file == NULL) {
+            fprintf(stderr, "Error creating file number %lu.\n", i);
+            exit(EXIT_FAILURE);
+        }
+		fclose(file);
+	}
+
+    // measuring 
 
     for (int i = 0; i < measurements; i++) {
         printf("Measurement %d/%d running...\n", i + 1, measurements);
@@ -114,11 +133,19 @@ void list_dir_runner(int file_amount, int measurements) {
         total += result;
     }
 
+    // deleting all created files
+
+	for (FILES i = 0; i < file_amount; i++) {
+		if (remove(file_names + i*max_file_name_length) != 0) {
+			fprintf(stderr, "Failed to remove \"%s\" file\n", file_names + i*max_file_name_length);
+		}
+	}
+
     total /= measurements;
     __nsec total_ms = ukarch_time_nsec_to_msec(total);
 
     printf("%d measurements successfully conducted\n", measurements);
-	printf("Listing %d files took on average: %ldms %.3fs \n", file_amount, total_ms, (double) total_ms / 1000);
+	printf("Listing %lu files took on average: %ldms %.3fs \n", file_amount, total_ms, (double) total_ms / 1000);
 
 }
 

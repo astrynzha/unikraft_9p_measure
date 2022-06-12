@@ -69,10 +69,10 @@ void write_bytes(FILE *file, BYTES bytes) {
     Initializing file names of kind: "file_0", "file_1", "file_2" and so on
 
 */
-void init_filenames(int file_amount, int max_filename_length, char *file_names) {
-	for (int i = 0; i < file_amount; i++) {
+void init_filenames(FILES file_amount, int max_filename_length, char *file_names) {
+	for (FILES i = 0; i < file_amount; i++) {
 		char suffix[7 + DIGITS(i)];
-		sprintf(suffix, "file_%d", i);
+		sprintf(suffix, "file_%lu", i);
 		strcpy(file_names + i*max_filename_length, suffix);
 	}
 }
