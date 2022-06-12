@@ -183,9 +183,9 @@ __nsec write_seq(BYTES bytes, BYTES buffer_size) {
     The function:
     1. Randomly determines a file position from range [0, EOF - upper_write_limit).
     2. Writes a random amount of bytes, sampled from range [lower_write_limit, upper_write_limit].
-    3. Repeats steps 1-2 until the 'remeaining_bytes' amount of bytes is written.
+    3. Repeats steps 1-2 until the 'remaining_bytes' amount of bytes is written.
 */
-__nsec write_randomly(FILE *file, BYTES remeaining_bytes, BYTES lower_write_limit, BYTES upper_write_limit) {
+__nsec write_randomly(FILE *file, BYTES remaining_bytes, BYTES buffer_size, BYTES lower_write_limit, BYTES upper_write_limit) {
 	BYTES size = get_file_size(file);
 
 	__nsec start, end;
@@ -193,16 +193,16 @@ __nsec write_randomly(FILE *file, BYTES remeaining_bytes, BYTES lower_write_limi
 	start = ukplat_monotonic_clock();
 
 	long int position;
-	while (remeaining_bytes > upper_write_limit) {
+	while (remaining_bytes > upper_write_limit) {
 		position = (long int) sample_in_range(0ULL, size - upper_write_limit);
 		fseek(file, position, SEEK_SET);
 		BYTES bytes_to_write = sample_in_range(lower_write_limit, upper_write_limit);
-		write_bytes(file, bytes_to_write);
-		remeaining_bytes -= bytes_to_write;
+		write_bytes(file, bytes_to_write, buffer_size);
+		remaining_bytes -= bytes_to_write;
 	}
 	position = (long int) sample_in_range(0, size - upper_write_limit);
 	fseek(file, position, SEEK_SET);
-	write_bytes(file, remeaining_bytes);
+	write_bytes(file, remaining_bytes, buffer_size);
 
 	end = ukplat_monotonic_clock();
 

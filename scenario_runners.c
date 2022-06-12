@@ -130,7 +130,7 @@ void write_seq_runner(BYTES bytes, BYTES buffer_size, int measurements) {
 	printf("Average result: %ldms %.3fs \n", total_ms, (double) total_ms / 1000);
 }
 
-void write_randomly_runner(const char *filename, BYTES bytes, BYTES lower_write_limit, BYTES upper_write_limit, int measurements) {
+void write_randomly_runner(const char *filename, BYTES bytes, BYTES buffer_size, BYTES lower_write_limit, BYTES upper_write_limit, int measurements) {
 	FILE *file;
 	file = fopen(filename, "r+");
 	if (file == NULL) {
@@ -149,7 +149,7 @@ void write_randomly_runner(const char *filename, BYTES bytes, BYTES lower_write_
         printf("Measurement %d/%d running...\n", i + 1, measurements);
 
         srand(time(NULL)); // setting random seed
-        result = write_randomly(file, bytes, lower_write_limit, upper_write_limit);
+        result = write_randomly(file, bytes, buffer_size, lower_write_limit, upper_write_limit);
         result_ms = ukarch_time_nsec_to_msec(result); 
         printf("Result: %ldms %.3fs\n", result_ms, (double) result_ms / 1000);
 

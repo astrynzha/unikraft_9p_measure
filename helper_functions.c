@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+
 BYTES get_file_size(FILE *file) {
 	fseek(file, 0L, SEEK_END);
 	size_t size = ftell(file);
@@ -43,12 +44,12 @@ void read_bytes(FILE *file, BYTES bytes) {
 /*
     Writes `bytes` bytes with a 1KB buffer.
 */
-void write_bytes(FILE *file, BYTES bytes) {
-	BYTES buffer_size = 1024;
-	char buffer[buffer_size];
-	for (BYTES i = 0; i < buffer_size; i++) {
-		buffer[i] = 'X';
-	}
+void write_bytes(FILE *file, BYTES bytes, BYTES buffer_size) {
+	char *buffer = malloc(buffer_size);
+	if (buffer == NULL) {
+		fprintf(stderr, "Error! Memory not allocated. At %s, line %d. \n", __FILE__, __LINE__);
+		exit(EXIT_FAILURE);
+	} 
 
 	while (bytes > buffer_size) {
 		if (buffer_size != fwrite(buffer, 1, (size_t) buffer_size, file)) {
@@ -63,6 +64,8 @@ void write_bytes(FILE *file, BYTES bytes) {
             puts("Failed to write");
         }
     }
+
+	free(buffer);
 }
 
 /* 
