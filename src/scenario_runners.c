@@ -70,7 +70,7 @@ void list_dir_runner(FILES file_amount, int measurements) {
     // initializing files 
 
     int max_file_name_length = 7 + DIGITS(file_amount - 1);
-	char *file_names = (char*) malloc(file_amount*max_file_name_length); // 2D array
+	char *file_names = (char*) malloc(file_amount*max_file_name_length); // implicit 2D array
 	init_filenames(file_amount, max_file_name_length, file_names);
 
 	for (FILES i = 0; i < file_amount; i++) {

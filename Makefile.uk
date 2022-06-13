@@ -1,6 +1,6 @@
 $(eval $(call addlib,apphelloworld))
 
-APPHELLOWORLD_SRCS-y += $(APPHELLOWORLD_BASE)/main.c
-APPHELLOWORLD_SRCS-y += $(APPHELLOWORLD_BASE)/helper_functions.c
-APPHELLOWORLD_SRCS-y += $(APPHELLOWORLD_BASE)/measurement_scenarios.c
-APPHELLOWORLD_SRCS-y += $(APPHELLOWORLD_BASE)/scenario_runners.c
+APPHELLOWORLD_SRCS-y += $(APPHELLOWORLD_BASE)/src/main.c
+APPHELLOWORLD_SRCS-y += $(APPHELLOWORLD_BASE)/src/helper_functions.c
+APPHELLOWORLD_SRCS-y += $(APPHELLOWORLD_BASE)/src/measurement_scenarios.c
+APPHELLOWORLD_SRCS-y += $(APPHELLOWORLD_BASE)/src/scenario_runners.c
