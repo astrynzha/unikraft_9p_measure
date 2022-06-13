@@ -4,6 +4,9 @@
 
 #include <time.h>
 #include <stdlib.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
 
 #include "helper_functions.h"
 #include "measurement_scenarios.h"
@@ -60,12 +63,9 @@ void remove_files_runner(FILES amount, int measurements) {
 }
 
 void list_dir_runner(FILES file_amount, int measurements) {
-    printf("###########################\n");
-    printf("Measuring listing %lu files\n", file_amount);
-
-    __nsec result;
-    __nsec result_ms;
-    __nsec total = 0;
+    char dir_name[] = "list_dir";
+    mkdir(dir_name, 0777);
+    chdir(dir_name);
 
     // initializing files 
 
@@ -79,6 +79,14 @@ void list_dir_runner(FILES file_amount, int measurements) {
 
     // measuring 
 
+    printf("###########################\n");
+    printf("Measuring listing %lu files\n", file_amount);
+
+    __nsec result;
+    __nsec result_ms;
+    __nsec total = 0;
+
+
     for (int i = 0; i < measurements; i++) {
         printf("Measurement %d/%d running...\n", i + 1, measurements);
 
@@ -89,20 +97,21 @@ void list_dir_runner(FILES file_amount, int measurements) {
         total += result;
     }
 
-    // deleting all created files
-
-	for (FILES i = 0; i < file_amount; i++) {
-		if (remove(file_names + i*max_file_name_length) != 0) {
-			fprintf(stderr, "Failed to remove \"%s\" file\n", file_names + i*max_file_name_length);
-		}
-	}
-
     total /= measurements;
     __nsec total_ms = ukarch_time_nsec_to_msec(total);
 
     printf("%d measurements successfully conducted\n", measurements);
 	printf("Listing %lu files took on average: %ldms %.3fs \n", file_amount, total_ms, (double) total_ms / 1000);
 
+    // deleting all created files and directories
+
+	for (FILES i = 0; i < file_amount; i++) {
+		if (remove(file_names + i*max_file_name_length) != 0) {
+			fprintf(stderr, "Failed to remove \"%s\" file\n", file_names + i*max_file_name_length);
+		}
+	}
+    chdir("/..");
+    rmdir(dir_name);
 }
 
 void write_seq_runner(BYTES bytes, BYTES buffer_size, int measurements) {
