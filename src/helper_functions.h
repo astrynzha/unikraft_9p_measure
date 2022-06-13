@@ -4,6 +4,16 @@
 #include <stdio.h>
 #include <math.h>
 
+// #define NDEBUG
+#include <assert.h>
+
+#define DEBUGMODE 1 
+#ifdef DEBUGMODE
+#define DEBUG_PRINT(...) printf("DEBUG: " __VA_ARGS__ "\n")
+#else
+#define DEBUG_PRINT(...)
+#endif 
+
 #define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
 // how many digits a number has. Cannot be less than 1.
 #define DIGITS(num) ((int)((ceil(log10(MAX(num, 1))+1)*sizeof(char))))

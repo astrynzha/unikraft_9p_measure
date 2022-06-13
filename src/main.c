@@ -10,6 +10,9 @@
 
 int main(int argc, char *argv[])
 {
+	DEBUG_PRINT("__________________________\n" 
+	"Running in DEBUGMODE\n__________________________");
+
 	// create_file_of_size("data_100M", MB(100));
 
 	list_dir_runner(15000, 5);

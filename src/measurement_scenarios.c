@@ -106,24 +106,22 @@ __nsec list_dir(FILES file_amount) {
     }
 
 	char str[256];
-	// TODO: add to debug:
-	// FILES file_count = 0;
+	#ifdef DEBUGMODE
+	FILES file_count = 0;
+	#endif
     while ( (ep = readdir (dp)) ) {
 		strcpy(str, ep->d_name); // using filenames somehow
-		// TODO: add to debug;
-		// file_count++; 
+		#ifdef DEBUGMODE
+		file_count++; 
+		#endif
     }
     (void) closedir (dp);
 
 	end = ukplat_monotonic_clock();
 
-	// TODO: add to debug or as an assertion. Or maybe just delete
-	/*
-	file_amount += 2; // including "./" and "../" entries
-	if (file_amount != file_count) {
-		fprintf(stderr, "ERROR: Directory contains %lu files. %lu was expected.\n", file_count, file_amount);
-	}
-	*/
+	#ifdef DEBUGMODE
+	assert(file_amount + 2 == file_count);
+	#endif
 
     return end - start;
 }
