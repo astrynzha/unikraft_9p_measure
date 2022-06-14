@@ -5,6 +5,8 @@
 #include <dirent.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/stat.h>
 
 /*
     Measure removing `amount` files.
@@ -12,8 +14,9 @@
     Necessary files are created and deleted by the function.
 */
 __nanosec create_files(FILES amount) {
-	__nanosec start, end;
-
+	char dir_name[] = "create_files";
+	mkdir(dir_name, 0777);
+	chdir(dir_name);
 	// initializing file names 
 
     int max_file_name_length = 7 + DIGITS(amount - 1);
@@ -22,6 +25,7 @@ __nanosec create_files(FILES amount) {
 
     // measuring the creation of `amount` files
 
+	__nanosec start, end;
 	start = _clock();
 
 	for (FILES i = 0; i < amount; i++) {
@@ -43,6 +47,11 @@ __nanosec create_files(FILES amount) {
 			fprintf(stderr, "Failed to remove \"%s\" file\n", file_name);
 		}
 	}
+    chdir("..");
+    int ret = rmdir(dir_name);
+    if (ret == -1) {
+        printf("Failed to remove directory %s\n", dir_name);
+    }
 
     return end - start;
 }

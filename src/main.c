@@ -21,10 +21,11 @@ int main(int argc, char *argv[])
 	DEBUG_PRINT("Running on %s\n", platform);
 	DEBUG_PRINT("__________________________\n");
 
-	create_file_of_size("data_100M", MB(100));
+	// create_file_of_size("data_100M", MB(100));
 
+	FILES amount[] = {10, 100, 500, 1000, 2500, 5000, 10000, 20000, 50000, 100000};
+	create_files_runner(amount, 10, 10);
 	// list_dir_runner(150000, 5);
-	// create_files_runner(5000, 4);
 	// remove_files_runner(5000, 4);
 
 	// read_randomly_runner("data_100M", MB(100), 64, MB(0.1), MB(1), 4);
