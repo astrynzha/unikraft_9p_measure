@@ -2,19 +2,18 @@
 #define MEASUREMENT_SCENARIOS_H
 
 #include <stdio.h>
-#include <uk/plat/time.h>
 
 #include "helper_functions.h"
+#include "time_functions.h"
 
-__nsec create_files(FILES amount);
-__nsec remove_files(FILES amount);
-__nsec list_dir(FILES file_amount);
+__nanosec create_files(FILES amount);
+__nanosec remove_files(FILES amount);
+__nanosec list_dir(FILES file_amount);
 
-__nsec write_seq(BYTES bytes, BYTES buffer_size);
-__nsec write_randomly(FILE *file, BYTES bytes, BYTES buffer_size, BYTES lower_write_limit, BYTES upper_write_limit);
+__nanosec write_seq(BYTES bytes, BYTES buffer_size);
+__nanosec write_randomly(FILE *file, BYTES bytes, BYTES buffer_size, BYTES lower_write_limit, BYTES upper_write_limit);
 
-__nsec read_seq(FILE *file, BYTES bytes, BYTES buffer_size);
-__nsec read_seq_existing(FILE *file);
-__nsec read_randomly(FILE *file, BYTES bytes, BYTES buffer_size, BYTES lower_read_limit, BYTES upper_read_limit);
+__nanosec read_seq(FILE *file, BYTES bytes, BYTES buffer_size);
+__nanosec read_randomly(FILE *file, BYTES bytes, BYTES buffer_size, BYTES lower_read_limit, BYTES upper_read_limit);
 
 #endif

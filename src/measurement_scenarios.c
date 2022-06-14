@@ -1,19 +1,18 @@
 #include "measurement_scenarios.h"
 #include "helper_functions.h"
+#include "time_functions.h"
 
-#include <uk/plat/time.h>
 #include <dirent.h>
 #include <stdlib.h>
 #include <string.h>
-
 
 /*
     Measure removing `amount` files.
 
     Necessary files are created and deleted by the function.
 */
-__nsec create_files(FILES amount) {
-	__nsec start, end;
+__nanosec create_files(FILES amount) {
+	__nanosec start, end;
 
 	// initializing file names 
 
@@ -23,7 +22,7 @@ __nsec create_files(FILES amount) {
 
     // measuring the creation of `amount` files
 
-	start = ukplat_monotonic_clock();
+	start = _clock();
 
 	for (FILES i = 0; i < amount; i++) {
 		FILE *file = fopen(file_names + i * max_file_name_length, "w");
@@ -34,7 +33,7 @@ __nsec create_files(FILES amount) {
 		fclose(file);
 	}
 
-	end = ukplat_monotonic_clock();
+	end = _clock();
 
     // cleaning up: deleting all files
 
@@ -53,8 +52,8 @@ __nsec create_files(FILES amount) {
 
     Necessary files are created and deleted by the function.
 */
-__nsec remove_files(FILES amount) {
-    __nsec start, end;
+__nanosec remove_files(FILES amount) {
+    __nanosec start, end;
 
 	// initializing file names
 
@@ -73,16 +72,19 @@ __nsec remove_files(FILES amount) {
 		fclose(file);
 	}
 
+	// flush FS buffers and free pagecaches
+	// system("sync; echo 1 > /proc/sys/vm/drop_caches"); 
+
     // measuring the delition of `amount` files
 
-	start = ukplat_monotonic_clock();
+	start = _clock();
 	for (FILES i = 0; i < amount; i++) {
 		char *file_name = file_names + i * max_file_name_length;
 		if (remove(file_name) != 0) {
 			fprintf(stderr, "Failed to remove \"%s\" file\n", file_name);
 		}
 	}
-	end = ukplat_monotonic_clock();
+	end = _clock();
 
     return end - start;
 }
@@ -93,10 +95,10 @@ __nsec remove_files(FILES amount) {
 
     Necessary files are to be created and deleted by the caller
 */
-__nsec list_dir(FILES file_amount) {
-	__nsec start, end;
+__nanosec list_dir(FILES file_amount) {
+	__nanosec start, end;
 
-	start = ukplat_monotonic_clock();
+	start = _clock();
 
 	DIR *dp;
 	struct dirent *ep;     
@@ -117,7 +119,7 @@ __nsec list_dir(FILES file_amount) {
     }
     (void) closedir (dp);
 
-	end = ukplat_monotonic_clock();
+	end = _clock();
 
 	#ifdef DEBUGMODE
 	assert(file_amount + 2 == file_count);
@@ -132,7 +134,7 @@ __nsec list_dir(FILES file_amount) {
     
     Write file is created and deleted by the function.
 */
-__nsec write_seq(BYTES bytes, BYTES buffer_size) {
+__nanosec write_seq(BYTES bytes, BYTES buffer_size) {
 	FILE *file;
 
 	char *buffer = malloc(buffer_size);
@@ -143,14 +145,14 @@ __nsec write_seq(BYTES bytes, BYTES buffer_size) {
 	BYTES iterations = bytes / buffer_size;
 	BYTES rest = bytes % buffer_size;
 
-	file = fopen("/write_data", "w");
+	file = fopen("write_data", "w");
 	if (file == NULL) {
-		fprintf(stderr, "Error opening file '/write_data'.\n");
+		fprintf(stderr, "Error opening file 'write_data'.\n");
 		exit(EXIT_FAILURE);
 	}	
 
-	__nsec start, end;
-	start = ukplat_monotonic_clock();
+	__nanosec start, end;
+	start = _clock();
 
 	for (BYTES i = 0; i < iterations; i++) {
 		fwrite(buffer, buffer_size, 1, file);
@@ -161,7 +163,7 @@ __nsec write_seq(BYTES bytes, BYTES buffer_size) {
 		}
 	}
 
-	end = ukplat_monotonic_clock();
+	end = _clock();
 
 	fclose(file);
 	free(buffer);
@@ -183,12 +185,12 @@ __nsec write_seq(BYTES bytes, BYTES buffer_size) {
     2. Writes a random amount of bytes, sampled from range [lower_write_limit, upper_write_limit].
     3. Repeats steps 1-2 until the 'remaining_bytes' amount of bytes is written.
 */
-__nsec write_randomly(FILE *file, BYTES remaining_bytes, BYTES buffer_size, BYTES lower_write_limit, BYTES upper_write_limit) {
+__nanosec write_randomly(FILE *file, BYTES remaining_bytes, BYTES buffer_size, BYTES lower_write_limit, BYTES upper_write_limit) {
 	BYTES size = get_file_size(file);
 
-	__nsec start, end;
+	__nanosec start, end;
 
-	start = ukplat_monotonic_clock();
+	start = _clock();
 
 	long int position;
 	while (remaining_bytes > upper_write_limit) {
@@ -202,7 +204,7 @@ __nsec write_randomly(FILE *file, BYTES remaining_bytes, BYTES buffer_size, BYTE
 	fseek(file, position, SEEK_SET);
 	write_bytes(file, remaining_bytes, buffer_size);
 
-	end = ukplat_monotonic_clock();
+	end = _clock();
 
     return end - start;
 }
@@ -212,7 +214,7 @@ __nsec write_randomly(FILE *file, BYTES remaining_bytes, BYTES buffer_size, BYTE
 
     File is first created by the function, read and then deleted.
 */
-__nsec read_seq(FILE *file, BYTES bytes, BYTES buffer_size) {
+__nanosec read_seq(FILE *file, BYTES bytes, BYTES buffer_size) {
 	BYTES iterations = bytes / buffer_size;
     BYTES rest = bytes % buffer_size;
 	char *buffer = malloc(buffer_size);
@@ -223,9 +225,9 @@ __nsec read_seq(FILE *file, BYTES bytes, BYTES buffer_size) {
 
     // measuring sequential read
 
-	__nsec start, end;
+	__nanosec start, end;
 
-	start = ukplat_monotonic_clock();
+	start = _clock();
 	
 	for (BYTES i = 0; i < iterations; i++) {
 		if (buffer_size != fread(buffer, sizeof(char), buffer_size, file)) {
@@ -238,45 +240,12 @@ __nsec read_seq(FILE *file, BYTES bytes, BYTES buffer_size) {
 		}
 	}
 
-	end = ukplat_monotonic_clock();
+	end = _clock();
 
 	free(buffer);
     return end - start;
 }
 
-
-/*
-    Measuring sequential read.
-
-    The file is provided by the caller and not deleted in the end.
-*/
-__nsec read_seq_existing(FILE *file) {
-	BYTES buffer_size = KB(1);
-	char buffer[buffer_size];
-
-	BYTES size = get_file_size(file);
-	BYTES iterations = size / buffer_size;
-	BYTES rest = size % buffer_size;
-
-	__nsec start, end;
-
-	start = ukplat_monotonic_clock();
-	
-	for (BYTES i = 0; i < iterations; i++) {
-		if (buffer_size != fread(buffer, sizeof(char), buffer_size, file)) {
-			fprintf(stderr, "Failed to read on iteration #%llu\n", i);
-		}
-	}
-	if (rest > 0) {
-		if (rest != fread(buffer, sizeof(char), rest, file)) {
-			fprintf(stderr, "Failed to read the rest of the file\n");
-		}
-	}
-
-	end = ukplat_monotonic_clock();
-
-    return end - start;
-}
 
 /*
     Measuring random access read (non-sequential). Seed has to be set by the caller.
@@ -288,12 +257,12 @@ __nsec read_seq_existing(FILE *file) {
     
     File is provided by the caller.
 */
-__nsec read_randomly(FILE *file, BYTES remaining_bytes, BYTES buffer_size, BYTES lower_read_limit, BYTES upper_read_limit) {
+__nanosec read_randomly(FILE *file, BYTES remaining_bytes, BYTES buffer_size, BYTES lower_read_limit, BYTES upper_read_limit) {
 	BYTES size = get_file_size(file);
 
-	__nsec start, end;
+	__nanosec start, end;
 
-	start = ukplat_monotonic_clock();
+	start = _clock();
 
 	long int position;
 	while (remaining_bytes > upper_read_limit) {
@@ -307,7 +276,7 @@ __nsec read_randomly(FILE *file, BYTES remaining_bytes, BYTES buffer_size, BYTES
 	fseek(file, position, SEEK_SET);
 	read_bytes(file, remaining_bytes, buffer_size);
 
-	end = ukplat_monotonic_clock();
+	end = _clock();
 
     return end - start;
 }

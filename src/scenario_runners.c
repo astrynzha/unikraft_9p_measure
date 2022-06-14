@@ -1,65 +1,68 @@
 #include "scenario_runners.h"
 
-#include <uk/plat/time.h>
-
-#include <time.h>
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
+#ifdef DEBUGMODE
+#include <errno.h>
+#include <string.h>
+#endif // DEBUGMODE
+
 
 #include "helper_functions.h"
 #include "measurement_scenarios.h"
+#include "time_functions.h"
 
 
 void create_files_runner(FILES amount, int measurements) {
     printf("###########################\n");
     printf("Measuring creating %lu files\n", amount);
 
-    __nsec result;
-    __nsec result_ms;
-    __nsec total = 0;
+    __nanosec result;
+    __nanosec result_ms;
+    __nanosec total = 0;
 
     for (int i = 0; i < measurements; i++) {
         printf("Measurement %d/%d running...\n", i + 1, measurements);
 
         result = create_files(amount);
-        result_ms = ukarch_time_nsec_to_msec(result); 
-        printf("Result: %ldms %.3fs\n", result_ms, (double) result_ms / 1000);
+        result_ms = nanosec_to_milisec(result); 
+        printf("Result: %lums %.3fs\n", result_ms, (double) result_ms / 1000);
 
         total += result;
     }
 
     total /= measurements;
-    __nsec total_ms = ukarch_time_nsec_to_msec(total);
+    __nanosec total_ms = nanosec_to_milisec(total);
 
     printf("%d measurements successfully conducted\n", measurements);
-	printf("Creating %lu files took on average: %ldms %.3fs \n", amount, total_ms, (double) total_ms / 1000);
+	printf("Creating %lu files took on average: %lums %.3fs \n", amount, total_ms, (double) total_ms / 1000);
 }
 
 void remove_files_runner(FILES amount, int measurements) {
     printf("###########################\n");
     printf("Measuring removing %lu files\n", amount);
 
-    __nsec result;
-    __nsec result_ms;
-    __nsec total = 0;
+    __nanosec result;
+    __nanosec result_ms;
+    __nanosec total = 0;
 
     for (int i = 0; i < measurements; i++) {
         printf("Measurement %d/%d running...\n", i + 1, measurements);
 
         result = remove_files(amount);
-        result_ms = ukarch_time_nsec_to_msec(result); 
-        printf("Result: %ldms %.3fs\n", result_ms, (double) result_ms / 1000);
+        result_ms = nanosec_to_milisec(result); 
+        printf("Result: %lums %.3fs\n", result_ms, (double) result_ms / 1000);
 
         total += result;
     }
 
     total /= measurements;
-    __nsec total_ms = ukarch_time_nsec_to_msec(total);
+    __nanosec total_ms = nanosec_to_milisec(total);
 
     printf("%d measurements successfully conducted\n", measurements);
-	printf("Removing %lu files took on average: %ldms %.3fs \n", amount, total_ms, (double) total_ms / 1000);
+	printf("Removing %lu files took on average: %lums %.3fs \n", amount, total_ms, (double) total_ms / 1000);
 }
 
 void list_dir_runner(FILES file_amount, int measurements) {
@@ -82,26 +85,26 @@ void list_dir_runner(FILES file_amount, int measurements) {
     printf("###########################\n");
     printf("Measuring listing %lu files\n", file_amount);
 
-    __nsec result;
-    __nsec result_ms;
-    __nsec total = 0;
+    __nanosec result;
+    __nanosec result_ms;
+    __nanosec total = 0;
 
 
     for (int i = 0; i < measurements; i++) {
         printf("Measurement %d/%d running...\n", i + 1, measurements);
 
         result = list_dir(file_amount);
-        result_ms = ukarch_time_nsec_to_msec(result); 
-        printf("Result: %ldms %.3fs\n", result_ms, (double) result_ms / 1000);
+        result_ms = nanosec_to_milisec(result); 
+        printf("Result: %lums %.3fs\n", result_ms, (double) result_ms / 1000);
 
         total += result;
     }
 
     total /= measurements;
-    __nsec total_ms = ukarch_time_nsec_to_msec(total);
+    __nanosec total_ms = nanosec_to_milisec(total);
 
     printf("%d measurements successfully conducted\n", measurements);
-	printf("Listing %lu files took on average: %ldms %.3fs \n", file_amount, total_ms, (double) total_ms / 1000);
+	printf("Listing %lu files took on average: %lums %.3fs \n", file_amount, total_ms, (double) total_ms / 1000);
 
     // deleting all created files and directories
 
@@ -110,33 +113,37 @@ void list_dir_runner(FILES file_amount, int measurements) {
 			fprintf(stderr, "Failed to remove \"%s\" file\n", file_names + i*max_file_name_length);
 		}
 	}
-    chdir("/..");
-    rmdir(dir_name);
+    chdir("..");
+    int ret = rmdir(dir_name);
+    if (ret == -1) {
+        printf("Failed to remove directory %s\n", dir_name);
+        DEBUG_PRINT("%s\n", strerror(errno));
+    }
 }
 
 void write_seq_runner(BYTES bytes, BYTES buffer_size, int measurements) {
     printf("###########################\n");
     printf("Measuring sequential write of %llu megabytes with a buffer of %lluB\n", B_TO_MB(bytes), buffer_size);
 
-    __nsec result;
-    __nsec result_ms;
-    __nsec total = 0;
+    __nanosec result;
+    __nanosec result_ms;
+    __nanosec total = 0;
 
     for (int i = 0; i < measurements; i++) {
         printf("Measurement %d/%d running...\n", i + 1, measurements);
 
         result = write_seq(bytes, buffer_size);
-        result_ms = ukarch_time_nsec_to_msec(result); 
-        printf("Result: %ldms %.3fs\n", result_ms, (double) result_ms / 1000);
+        result_ms = nanosec_to_milisec(result); 
+        printf("Result: %lums %.3fs\n", result_ms, (double) result_ms / 1000);
 
         total += result;
     }
 
     total /= measurements;
-    __nsec total_ms = ukarch_time_nsec_to_msec(total);
+    __nanosec total_ms = nanosec_to_milisec(total);
 
     printf("%d measurements successfully conducted\n", measurements);
-	printf("Average result: %ldms %.3fs \n", total_ms, (double) total_ms / 1000);
+	printf("Average result: %lums %.3fs \n", total_ms, (double) total_ms / 1000);
 }
 
 void write_randomly_runner(const char *filename, BYTES bytes, BYTES buffer_size, BYTES lower_write_limit, BYTES upper_write_limit, int measurements) {
@@ -150,26 +157,26 @@ void write_randomly_runner(const char *filename, BYTES bytes, BYTES buffer_size,
     printf("###########################\n");
     printf("Measuring random-access write\n");
 
-    __nsec result;
-    __nsec result_ms;
-    __nsec total = 0;
+    __nanosec result;
+    __nanosec result_ms;
+    __nanosec total = 0;
 
     for (int i = 0; i < measurements; i++) {
         printf("Measurement %d/%d running...\n", i + 1, measurements);
 
         srand(time(NULL)); // setting random seed
         result = write_randomly(file, bytes, buffer_size, lower_write_limit, upper_write_limit);
-        result_ms = ukarch_time_nsec_to_msec(result); 
-        printf("Result: %ldms %.3fs\n", result_ms, (double) result_ms / 1000);
+        result_ms = nanosec_to_milisec(result); 
+        printf("Result: %lums %.3fs\n", result_ms, (double) result_ms / 1000);
 
         total += result;
     }
 
     total /= measurements;
-    __nsec total_ms = ukarch_time_nsec_to_msec(total);
+    __nanosec total_ms = nanosec_to_milisec(total);
 
     printf("%d measurements successfully conducted\n", measurements);
-	printf("Writing %llu non-sequentially took on average: %ldms %.3fs \n", B_TO_MB(bytes), total_ms, (double) total_ms / 1000);
+	printf("Writing %llu non-sequentially took on average: %lums %.3fs \n", B_TO_MB(bytes), total_ms, (double) total_ms / 1000);
 
 	fclose(file);
 }
@@ -179,13 +186,17 @@ void write_randomly_runner(const char *filename, BYTES bytes, BYTES buffer_size,
 */
 void read_seq_runner(const char *filename, BYTES bytes, BYTES buffer_size, int measurements) {
     FILE *file = fopen(filename, "r");
+    if (file == NULL) {
+		fprintf(stderr, "Error opening file '%s'.\n", filename);
+		exit(EXIT_FAILURE);
+    }
 
     printf("###########################\n");
     printf("Measuring sequential read\n");
 
-    __nsec result;
-    __nsec result_ms;
-    __nsec total = 0;
+    __nanosec result;
+    __nanosec result_ms;
+    __nanosec total = 0;
 
     for (int i = 0; i < measurements; i++) {
         printf("Measurement %d/%d running...\n", i + 1, measurements);
@@ -193,47 +204,16 @@ void read_seq_runner(const char *filename, BYTES bytes, BYTES buffer_size, int m
         // TODO: flush cache
         rewind(file);
         result = read_seq(file, bytes, buffer_size);
-        result_ms = ukarch_time_nsec_to_msec(result); 
-        printf("Result: %ldms %.3fs\n", result_ms, (double) result_ms / 1000);
+        result_ms = nanosec_to_milisec(result); 
+        printf("Result: %lums %.3fs\n", result_ms, (double) result_ms / 1000);
 
         total += result;
     }
 
     total /= measurements;
-    __nsec total_ms = ukarch_time_nsec_to_msec(total);
+    __nanosec total_ms = nanosec_to_milisec(total);
     printf("%d measurements successfully conducted\n", measurements);
-	printf("Reading %lluMB with %lluB buffer took on average: %ldms %.3fs \n", B_TO_MB(bytes), buffer_size, total_ms, (double) total_ms / 1000);
-}
-
-void read_seq_existing_runner(const char *filename, int measurements) {
-    FILE *file = fopen(filename, "r");
-    if (file == NULL) {
-		fprintf(stderr, "Error opening file '%s'.\n", filename);
-		exit(EXIT_FAILURE);
-    }
-
-    printf("###########################\n");
-    printf("Measuring sequential read of %lluMB\n", B_TO_MB(get_file_size(file)));
-
-    __nsec result;
-    __nsec result_ms;
-    __nsec total = 0;
-
-    for (int i = 0; i < measurements; i++) {
-        printf("Measurement %d/%d running...\n", i + 1, measurements);
-
-        result = read_seq_existing(file);
-        result_ms = ukarch_time_nsec_to_msec(result); 
-        printf("Result: %ldms %.3fs\n", result_ms, (double) result_ms / 1000);
-
-        total += result;
-    }
-
-    total /= measurements;
-    __nsec total_ms = ukarch_time_nsec_to_msec(total);
-
-    printf("%d measurements successfully conducted\n", measurements);
-	printf("Reading %llu megabytes took on average: %ldms %.3fs \n", B_TO_MB(get_file_size(file)), total_ms, (double) total_ms / 1000);
+	printf("Reading %lluMB with %lluB buffer took on average: %lums %.3fs \n", B_TO_MB(bytes), buffer_size, total_ms, (double) total_ms / 1000);
 
     fclose(file);
 }
@@ -249,26 +229,26 @@ void read_randomly_runner(const char *filename, BYTES bytes, BYTES buffer_size, 
     printf("###########################\n");
     printf("Measuring random-access read\n");
 
-    __nsec result;
-    __nsec result_ms;
-    __nsec total = 0;
+    __nanosec result;
+    __nanosec result_ms;
+    __nanosec total = 0;
 
     for (int i = 0; i < measurements; i++) {
         printf("Measurement %d/%d running...\n", i + 1, measurements);
 
         srand(time(NULL)); // setting random seed
         result = read_randomly(file, bytes, buffer_size, lower_read_limit, upper_read_limit);
-        result_ms = ukarch_time_nsec_to_msec(result); 
-        printf("Result: %ldms %.3fs\n", result_ms, (double) result_ms / 1000);
+        result_ms = nanosec_to_milisec(result); 
+        printf("Result: %lums %.3fs\n", result_ms, (double) result_ms / 1000);
 
         total += result;
     }
 
     total /= measurements;
-    __nsec total_ms = ukarch_time_nsec_to_msec(total);
+    __nanosec total_ms = nanosec_to_milisec(total);
 
     printf("%d measurements successfully conducted\n", measurements);
-	printf("Reading %lluMB with a buffer of %lluB took on average: %ldms %.3fs \n", 
+	printf("Reading %lluMB with a buffer of %lluB took on average: %lums %.3fs \n", 
         B_TO_MB(bytes), buffer_size, total_ms, (double) total_ms / 1000);
 
 	fclose(file);

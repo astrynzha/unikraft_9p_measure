@@ -9,7 +9,7 @@
 
 #define DEBUGMODE 1 
 #ifdef DEBUGMODE
-#define DEBUG_PRINT(...) printf("DEBUG: " __VA_ARGS__ "\n")
+#define DEBUG_PRINT(...) printf(__VA_ARGS__)
 #else
 #define DEBUG_PRINT(...)
 #endif 
