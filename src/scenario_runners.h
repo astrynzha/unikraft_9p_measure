@@ -8,7 +8,7 @@
 FILE *create_file_of_size(const char *filename, BYTES bytes);
 
 void create_files_runner(FILES *amount_arr, size_t arr_size, int measurements);
-void remove_files_runner(FILES amount, int measurements);
+void remove_files_runner(FILES *amount_arr, size_t arr_size, int measurements);
 void list_dir_runner(FILES file_amount, int measurements);
 
 void write_seq_runner(BYTES bytes, BYTES buffer_size, int measurements);

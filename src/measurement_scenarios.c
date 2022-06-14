@@ -62,7 +62,9 @@ __nanosec create_files(FILES amount) {
     Necessary files are created and deleted by the function.
 */
 __nanosec remove_files(FILES amount) {
-    __nanosec start, end;
+	char dir_name[] = "remove_files";
+	mkdir(dir_name, 0777);
+	chdir(dir_name);
 
 	// initializing file names
 
@@ -86,6 +88,7 @@ __nanosec remove_files(FILES amount) {
 
     // measuring the delition of `amount` files
 
+    __nanosec start, end;
 	start = _clock();
 	for (FILES i = 0; i < amount; i++) {
 		char *file_name = file_names + i * max_file_name_length;
@@ -94,6 +97,12 @@ __nanosec remove_files(FILES amount) {
 		}
 	}
 	end = _clock();
+
+    chdir("..");
+    int ret = rmdir(dir_name);
+    if (ret == -1) {
+        printf("Failed to remove directory %s\n", dir_name);
+    }
 
     return end - start;
 }
