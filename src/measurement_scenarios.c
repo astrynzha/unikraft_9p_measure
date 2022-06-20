@@ -17,6 +17,7 @@ __nanosec create_files(FILES amount) {
 	char dir_name[] = "create_files";
 	mkdir(dir_name, 0777);
 	chdir(dir_name);
+	
 	// initializing file names 
 
     int max_file_name_length = 7 + DIGITS(amount - 1);
