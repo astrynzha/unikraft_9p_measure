@@ -39,7 +39,7 @@ void create_files_runner(FILES *amount_arr, size_t arr_size, int measurements) {
 
         FILES amount = amount_arr[i];
         printf("###########################\n");
-        printf("%lu/%lu. Measuring creating %lu files\n", i, arr_size, amount);
+        printf("%lu/%lu. Measuring creating %lu files\n", i+1, arr_size, amount);
 
         __nanosec result;
         __nanosec result_ms;
@@ -72,6 +72,7 @@ void create_files_runner(FILES *amount_arr, size_t arr_size, int measurements) {
 }
 
 void remove_files_runner(FILES *amount_arr, size_t arr_size, int measurements) {
+
     // create a separate directory for this experiment
 
     #ifdef __Unikraft__
@@ -97,7 +98,7 @@ void remove_files_runner(FILES *amount_arr, size_t arr_size, int measurements) {
         // measures 'measurements' times the creation of 'amount' files takes
 
         printf("###########################\n");
-        printf("%lu/%lu. Measuring removing %lu files\n", i, arr_size, amount);
+        printf("%lu/%lu. Measuring removing %lu files\n", i+1, arr_size, amount);
 
         __nanosec result;
         __nanosec result_ms;
@@ -163,8 +164,6 @@ void list_dir_runner(FILES *amount_arr, size_t arr_size, int measurements) {
         chdir(list_dir_name);
 
         FILES file_amount = amount_arr[i];
-        printf("###########################\n");
-        printf("%lu/%lu. Measuring listing %lu files\n", i, arr_size, file_amount);
 
         // initializing dummy files 
 
@@ -177,7 +176,7 @@ void list_dir_runner(FILES *amount_arr, size_t arr_size, int measurements) {
         }
 
         printf("###########################\n");
-        printf("Measuring listing %lu files\n", file_amount);
+        printf("%lu/%lu. Measuring listing %lu files\n", i+1, arr_size, file_amount);
 
         __nanosec result;
         __nanosec result_ms;
@@ -222,32 +221,65 @@ void list_dir_runner(FILES *amount_arr, size_t arr_size, int measurements) {
     fclose(fp_results);
 }
 
-void write_seq_runner(BYTES bytes, BYTES buffer_size, int measurements) {
-    printf("###########################\n");
-    printf("Measuring sequential write of %llu megabytes with a buffer of %lluB\n", B_TO_MB(bytes), buffer_size);
+void write_seq_runner(BYTES bytes, BYTES *buffer_size_arr, size_t arr_size, int measurements) {
 
-    __nanosec result;
-    __nanosec result_ms;
-    __nanosec total = 0;
+    // create a separate directory for this experiment
 
-    for (int i = 0; i < measurements; i++) {
-        printf("Measurement %d/%d running...\n", i + 1, measurements);
-
-        result = write_seq(bytes, buffer_size);
-        result_ms = nanosec_to_milisec(result); 
-        printf("Result: %lums %.3fs\n", result_ms, (double) result_ms / 1000);
-
-        total += result;
+    #ifdef __Unikraft__
+    char dir_name[] = "write_seq_unikraft";
+    #elif __linux__
+    char dir_name[] = "write_seq_linux";
+    #endif 
+    mkdir(dir_name, 0777);
+    if (chdir(dir_name) == -1) {
+        printf("Error: could not change directory to %s\n", dir_name);
     }
 
-    total /= measurements;
-    __nanosec total_ms = nanosec_to_milisec(total);
+    char fname_results[] = "results.csv";
+    FILE *fp_results = fopen(fname_results, "w");
 
-    printf("%d measurements successfully conducted\n", measurements);
-	printf("Average result: %lums %.3fs \n", total_ms, (double) total_ms / 1000);
+    for (size_t i = 0; i < arr_size; i++) { // conducts measurement for each buffer_size 
+        char fname[17+DIGITS(i)];
+        sprintf(fname, "measurement_%lu.csv", i);
+        FILE *fp_measurement = fopen(fname, "w");
+
+        BYTES buffer_size = buffer_size_arr[i];
+
+        printf("###########################\n");
+        printf("%lu/%lu. Measuring sequential write of %llu megabytes with a buffer of %lluB\n",
+            i+1, arr_size, B_TO_MB(bytes), buffer_size);
+
+        __nanosec result;
+        __nanosec result_ms;
+        __nanosec total = 0;
+
+        for (int i = 0; i < measurements; i++) {
+            printf("Measurement %d/%d running...\n", i + 1, measurements);
+
+            result = write_seq(bytes, buffer_size);
+
+            fprintf(fp_measurement, "%lu\n", result);
+            result_ms = nanosec_to_milisec(result); 
+            printf("Result: %lums %.3fs\n", result_ms, (double) result_ms / 1000);
+
+            total += result;
+        }
+
+        total /= measurements;
+        fprintf(fp_results, "%llu,%lu\n", buffer_size, total);
+        __nanosec total_ms = nanosec_to_milisec(total);
+
+        printf("%d measurements successfully conducted\n", measurements);
+        printf("Average result: %lums %.3fs \n", total_ms, (double) total_ms / 1000);
+
+        fclose(fp_measurement);
+    }
+
+    fclose(fp_results);
 }
 
-void write_randomly_runner(const char *filename, BYTES bytes, BYTES buffer_size, BYTES lower_write_limit, BYTES upper_write_limit, int measurements) {
+void write_randomly_runner(const char *filename, BYTES bytes, BYTES *buffer_size_arr,
+    size_t arr_size, BYTES lower_write_limit, BYTES upper_write_limit, int measurements) {
 	FILE *file;
 	file = fopen(filename, "r+");
 	if (file == NULL) {
@@ -255,71 +287,137 @@ void write_randomly_runner(const char *filename, BYTES bytes, BYTES buffer_size,
 		exit(EXIT_FAILURE);
 	}
 
-    printf("###########################\n");
-    printf("Measuring random-access write\n");
+    // create a separate directory for this experiment
 
-    __nanosec result;
-    __nanosec result_ms;
-    __nanosec total = 0;
-
-    for (int i = 0; i < measurements; i++) {
-        printf("Measurement %d/%d running...\n", i + 1, measurements);
-
-        srand(time(NULL)); // setting random seed
-        result = write_randomly(file, bytes, buffer_size, lower_write_limit, upper_write_limit);
-        result_ms = nanosec_to_milisec(result); 
-        printf("Result: %lums %.3fs\n", result_ms, (double) result_ms / 1000);
-
-        total += result;
+    #ifdef __Unikraft__
+    char dir_name[] = "write_rand_unikraft";
+    #elif __linux__
+    char dir_name[] = "write_rand_linux";
+    #endif 
+    mkdir(dir_name, 0777);
+    if (chdir(dir_name) == -1) {
+        printf("Error: could not change directory to %s\n", dir_name);
     }
 
-    total /= measurements;
-    __nanosec total_ms = nanosec_to_milisec(total);
+    char fname_results[] = "results.csv";
+    FILE *fp_results = fopen(fname_results, "w");
 
-    printf("%d measurements successfully conducted\n", measurements);
-	printf("Writing %llu non-sequentially took on average: %lums %.3fs \n", B_TO_MB(bytes), total_ms, (double) total_ms / 1000);
+    for (size_t i = 0; i < arr_size; i++) { // conducts measurement for each buffer_size
+        char fname[17+DIGITS(i)];
+        sprintf(fname, "measurement_%lu.csv", i);
+        FILE *fp_measurement = fopen(fname, "w");
 
+        BYTES buffer_size = buffer_size_arr[i];
+
+        printf("###########################\n");
+        printf("%lu/%lu. Measuring random write of %llu megabytes with a buffer of %lluB\n",
+            i+1, arr_size, B_TO_MB(bytes), buffer_size);
+
+        __nanosec result;
+        __nanosec result_ms;
+        __nanosec total = 0;
+
+        for (int i = 0; i < measurements; i++) {
+            printf("Measurement %d/%d running...\n", i + 1, measurements);
+
+            srand(time(NULL)); // setting random seed
+            result = write_randomly(file, bytes, buffer_size, lower_write_limit, upper_write_limit);
+
+            fprintf(fp_measurement, "%lu\n", result);
+            result_ms = nanosec_to_milisec(result); 
+            printf("Result: %lums %.3fs\n", result_ms, (double) result_ms / 1000);
+
+            total += result;
+        }
+
+        total /= measurements;
+        fprintf(fp_results, "%llu,%lu\n", buffer_size, total);
+        __nanosec total_ms = nanosec_to_milisec(total);
+
+        printf("%d measurements successfully conducted\n", measurements);
+        printf("Writing %llu non-sequentially took on average: %lums %.3fs \n",
+            B_TO_MB(bytes), total_ms, (double) total_ms / 1000);
+
+        fclose(fp_measurement);
+    }
+
+    fclose(fp_results);
 	fclose(file);
 }
 
 /*
     'bytes' has to be less than file size.
 */
-void read_seq_runner(const char *filename, BYTES bytes, BYTES buffer_size, int measurements) {
+void read_seq_runner(const char *filename, BYTES bytes,
+    BYTES *buffer_size_arr, size_t arr_size, int measurements) {
+
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
-		fprintf(stderr, "Error opening file '%s'.\n", filename);
-		exit(EXIT_FAILURE);
+        fprintf(stderr, "Error opening file '%s'.\n", filename);
+        exit(EXIT_FAILURE);
     }
 
-    printf("###########################\n");
-    printf("Measuring sequential read\n");
 
-    __nanosec result;
-    __nanosec result_ms;
-    __nanosec total = 0;
+    // create a separate directory for this experiment
 
-    for (int i = 0; i < measurements; i++) {
-        printf("Measurement %d/%d running...\n", i + 1, measurements);
-
-        // TODO: flush cache
-        rewind(file);
-        result = read_seq(file, bytes, buffer_size);
-        result_ms = nanosec_to_milisec(result); 
-        printf("Result: %lums %.3fs\n", result_ms, (double) result_ms / 1000);
-
-        total += result;
+    #ifdef __Unikraft__
+    char dir_name[] = "read_seq_unikraft";
+    #elif __linux__
+    char dir_name[] = "read_seq_linux";
+    #endif 
+    mkdir(dir_name, 0777);
+    if (chdir(dir_name) == -1) {
+        printf("Error: could not change directory to %s\n", dir_name);
     }
 
-    total /= measurements;
-    __nanosec total_ms = nanosec_to_milisec(total);
-    printf("%d measurements successfully conducted\n", measurements);
-	printf("Reading %lluMB with %lluB buffer took on average: %lums %.3fs \n", B_TO_MB(bytes), buffer_size, total_ms, (double) total_ms / 1000);
+    char fname_results[] = "results.csv";
+    FILE *fp_results = fopen(fname_results, "w");
 
+    for (size_t i = 0; i < arr_size; i++) { // conducts measurement for each buffer_size 
+        char fname[17+DIGITS(i)];
+        sprintf(fname, "measurement_%lu.csv", i);
+        FILE *fp_measurement = fopen(fname, "w");
+
+        BYTES buffer_size = buffer_size_arr[i];
+
+        printf("###########################\n");
+        printf("%lu/%lu. Measuring sequential read of %llu megabytes with a buffer of %lluB\n",
+            i+1, arr_size, B_TO_MB(bytes), buffer_size);
+
+        __nanosec result;
+        __nanosec result_ms;
+        __nanosec total = 0;
+
+        for (int i = 0; i < measurements; i++) {
+            printf("Measurement %d/%d running...\n", i + 1, measurements);
+
+            // TODO: flush cache
+            result = read_seq(file, bytes, buffer_size);
+            rewind(file);
+
+            fprintf(fp_measurement, "%lu\n", result);
+            result_ms = nanosec_to_milisec(result); 
+            printf("Result: %lums %.3fs\n", result_ms, (double) result_ms / 1000);
+
+            total += result;
+        }
+
+        total /= measurements;
+        fprintf(fp_results, "%llu,%lu\n", buffer_size, total);
+        __nanosec total_ms = nanosec_to_milisec(total);
+
+        printf("%d measurements successfully conducted\n", measurements);
+        printf("Reading %lluMB with %lluB buffer took on average: %lums %.3fs \n", B_TO_MB(bytes), buffer_size, total_ms, (double) total_ms / 1000);
+
+        fclose(fp_measurement);
+    }
+
+    fclose(fp_results);
     fclose(file);
 }
 
-void read_randomly_runner(const char *filename, BYTES bytes, BYTES buffer_size, BYTES lower_read_limit, BYTES upper_read_limit, int measurements) {
+void read_randomly_runner(const char *filename, BYTES bytes, BYTES *buffer_size_arr,
+    size_t arr_size, BYTES lower_read_limit, BYTES upper_read_limit, int measurements) {
 	FILE *file;
 	file = fopen(filename, "r");
 	if (file == NULL) {
@@ -327,31 +425,61 @@ void read_randomly_runner(const char *filename, BYTES bytes, BYTES buffer_size, 
 		exit(EXIT_FAILURE);
 	}
 
-    printf("###########################\n");
-    printf("Measuring random-access read\n");
+    // create a separate directory for this experiment
 
-    __nanosec result;
-    __nanosec result_ms;
-    __nanosec total = 0;
-
-    for (int i = 0; i < measurements; i++) {
-        printf("Measurement %d/%d running...\n", i + 1, measurements);
-
-        srand(time(NULL)); // setting random seed
-        result = read_randomly(file, bytes, buffer_size, lower_read_limit, upper_read_limit);
-        result_ms = nanosec_to_milisec(result); 
-        printf("Result: %lums %.3fs\n", result_ms, (double) result_ms / 1000);
-
-        total += result;
+    #ifdef __Unikraft__
+    char dir_name[] = "read_rand_unikraft";
+    #elif __linux__
+    char dir_name[] = "read_rand_linux";
+    #endif 
+    mkdir(dir_name, 0777);
+    if (chdir(dir_name) == -1) {
+        printf("Error: could not change directory to %s\n", dir_name);
     }
 
-    total /= measurements;
-    __nanosec total_ms = nanosec_to_milisec(total);
+    char fname_results[] = "results.csv";
+    FILE *fp_results = fopen(fname_results, "w");
 
-    printf("%d measurements successfully conducted\n", measurements);
-	printf("Reading %lluMB with a buffer of %lluB took on average: %lums %.3fs \n", 
-        B_TO_MB(bytes), buffer_size, total_ms, (double) total_ms / 1000);
+    for (size_t i = 0; i < arr_size; i++) { // conducts measurement for each buffer_size
+        char fname[17+DIGITS(i)];
+        sprintf(fname, "measurement_%lu.csv", i);
+        FILE *fp_measurement = fopen(fname, "w");
 
+        BYTES buffer_size = buffer_size_arr[i];
+
+        printf("###########################\n");
+        printf("%lu/%lu. Measuring random read of %llu megabytes with a buffer of %lluB\n",
+            i+1, arr_size, B_TO_MB(bytes), buffer_size);
+
+        __nanosec result;
+        __nanosec result_ms;
+        __nanosec total = 0;
+
+        for (int i = 0; i < measurements; i++) {
+            printf("Measurement %d/%d running...\n", i + 1, measurements);
+
+            srand(time(NULL)); // setting random seed
+            result = read_randomly(file, bytes, buffer_size, lower_read_limit, upper_read_limit);
+
+            fprintf(fp_measurement, "%lu\n", result);
+            result_ms = nanosec_to_milisec(result); 
+            printf("Result: %lums %.3fs\n", result_ms, (double) result_ms / 1000);
+
+            total += result;
+        }
+
+        total /= measurements;
+        fprintf(fp_results, "%llu,%lu\n", buffer_size, total);
+        __nanosec total_ms = nanosec_to_milisec(total);
+
+        printf("%d measurements successfully conducted\n", measurements);
+        printf("Reading %lluMB with a buffer of %lluB took on average: %lums %.3fs \n", 
+            B_TO_MB(bytes), buffer_size, total_ms, (double) total_ms / 1000);
+
+        fclose(fp_measurement);
+    }
+
+    fclose(fp_results);
 	fclose(file);
 }
 
