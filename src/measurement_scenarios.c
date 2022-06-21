@@ -54,6 +54,8 @@ __nanosec create_files(FILES amount) {
         printf("Failed to remove directory %s\n", dir_name);
     }
 
+	free(file_names);
+
     return end - start;
 }
 
@@ -104,6 +106,8 @@ __nanosec remove_files(FILES amount) {
     if (ret == -1) {
         printf("Failed to remove directory %s\n", dir_name);
     }
+
+	free(file_names);
 
     return end - start;
 }

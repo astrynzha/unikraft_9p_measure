@@ -69,6 +69,7 @@ void create_files_runner(FILES *amount_arr, size_t arr_size, int measurements) {
     }
 
     fclose(fp_results);
+    chdir("..");
 }
 
 void remove_files_runner(FILES *amount_arr, size_t arr_size, int measurements) {
@@ -127,6 +128,7 @@ void remove_files_runner(FILES *amount_arr, size_t arr_size, int measurements) {
     }
 
     fclose(fp_results);
+    chdir("..");
 }
 
 void list_dir_runner(FILES *amount_arr, size_t arr_size, int measurements) {
@@ -219,6 +221,7 @@ void list_dir_runner(FILES *amount_arr, size_t arr_size, int measurements) {
     }
 
     fclose(fp_results);
+    chdir("..");
 }
 
 void write_seq_runner(BYTES bytes, BYTES *buffer_size_arr, size_t arr_size, int measurements) {
@@ -276,6 +279,7 @@ void write_seq_runner(BYTES bytes, BYTES *buffer_size_arr, size_t arr_size, int 
     }
 
     fclose(fp_results);
+    chdir("..");
 }
 
 void write_randomly_runner(const char *filename, BYTES bytes, BYTES *buffer_size_arr,
@@ -343,6 +347,7 @@ void write_randomly_runner(const char *filename, BYTES bytes, BYTES *buffer_size
 
     fclose(fp_results);
 	fclose(file);
+    chdir("..");
 }
 
 /*
@@ -414,6 +419,7 @@ void read_seq_runner(const char *filename, BYTES bytes,
 
     fclose(fp_results);
     fclose(file);
+    chdir("..");
 }
 
 void read_randomly_runner(const char *filename, BYTES bytes, BYTES *buffer_size_arr,
@@ -444,6 +450,7 @@ void read_randomly_runner(const char *filename, BYTES bytes, BYTES *buffer_size_
         char fname[17+DIGITS(i)];
         sprintf(fname, "measurement_%lu.csv", i);
         FILE *fp_measurement = fopen(fname, "w");
+        fprintf(fp_measurement, "m%lu\n", i);
 
         BYTES buffer_size = buffer_size_arr[i];
 
@@ -481,6 +488,7 @@ void read_randomly_runner(const char *filename, BYTES bytes, BYTES *buffer_size_
 
     fclose(fp_results);
 	fclose(file);
+    chdir("..");
 }
 
 /*
