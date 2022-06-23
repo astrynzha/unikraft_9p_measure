@@ -39,22 +39,32 @@ int main(int argc, char *argv[])
 
 	// create_file_of_size("data_100M", MB(100));
 
-	// FILES amount[] = {10, 100, 500, 1000, 2500, 5000, 10000, 20000, 50000, 100000};
-	// create_files_runner(amount, 10, 10);
-	// remove_files_runner(amount, 10, 4);
-	// list_dir_runner(amount, 10, 5);
-
-	int max_pow = 28;
-	BYTES buffer_sizes[max_pow-3];
-	for (int i = 0; i < max_pow-3; i++) { // buffer_sizes = {16, 32, 64, ..., 2^max_pow}
-		buffer_sizes[i] = bpow(2, i+4);
+	int max_pow = 17;
+	FILES amount[max_pow];
+	puts("amount");
+	for (int i = 0; i < max_pow; i++) { // buffer_sizes = {16, 32, 64, ..., 2^max_pow}
+		amount[i] = bpow(2, i + 1);
+		printf("%lu\n", amount[i]);
 	} 
 
-	// write_seq_runner(MB(50), buffer_sizes, max_pow-3, 4);
-	// write_randomly_runner("data_100M", MB(50), buffer_sizes, max_pow-3, MB(0.01), MB(1), 4);
+	create_files_runner(amount, 17, 10);
+	remove_files_runner(amount, 17, 10);
+	list_dir_runner(amount, 17, 10);
 
-	read_seq_runner("data_100M", MB(100), buffer_sizes, max_pow-3, 4);	
-	// read_randomly_runner("data_100M", MB(100), buffer_sizes, max_pow-3, MB(0.01), MB(1), 4);
+	int max_pow2 = 27;
+	BYTES buffer_sizes[max_pow2-3];
+	puts("buffer sizes");
+	for (int i = 0; i < max_pow2-3; i++) { // buffer_sizes = {16, 32, 64, ..., 2^max_pow}
+		buffer_sizes[i] = bpow(2, i+4);
+		printf("%llu\n", buffer_sizes[i]);
+	} 
+
+
+	write_seq_runner(MB(100), buffer_sizes, max_pow2-3, 10);
+	write_randomly_runner("data_100M", MB(100), buffer_sizes, max_pow2-3, MB(0.01), MB(0.1), 10);
+
+	read_seq_runner("data_100M", MB(100), buffer_sizes, max_pow2-3, 10);	
+	read_randomly_runner("data_100M", MB(100), buffer_sizes, max_pow2-3, MB(0.01), MB(0.1), 10);
 
 	return 0;
 }

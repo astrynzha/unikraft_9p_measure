@@ -186,6 +186,10 @@ void list_dir_runner(FILES *amount_arr, size_t arr_size, int measurements) {
 
         // measuring 'measurements' times the listing of 'file_amount' files takes
         for (int i = 0; i < measurements; i++) {
+            #ifdef __linux__
+            system("sync; echo 3 > /proc/sys/vm/drop_caches"); 
+            #endif
+
             printf("Measurement %d/%d running...\n", i + 1, measurements);
 
             result = list_dir(file_amount);
@@ -394,9 +398,11 @@ void read_seq_runner(const char *filename, BYTES bytes,
         __nanosec total = 0;
 
         for (int i = 0; i < measurements; i++) {
+            #ifdef __linux__
+            system("sync; echo 3 > /proc/sys/vm/drop_caches"); 
+            #endif
             printf("Measurement %d/%d running...\n", i + 1, measurements);
 
-            // TODO: flush cache
             result = read_seq(file, bytes, buffer_size);
             rewind(file);
 
@@ -463,6 +469,9 @@ void read_randomly_runner(const char *filename, BYTES bytes, BYTES *buffer_size_
         __nanosec total = 0;
 
         for (int i = 0; i < measurements; i++) {
+            #ifdef __linux__
+            system("sync; echo 3 > /proc/sys/vm/drop_caches"); 
+            #endif
             printf("Measurement %d/%d running...\n", i + 1, measurements);
 
             srand(time(NULL)); // setting random seed

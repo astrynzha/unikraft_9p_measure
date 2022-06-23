@@ -35,6 +35,10 @@ __nanosec create_files(FILES amount) {
             fprintf(stderr, "Error creating file number %lu.\n", i);
             exit(EXIT_FAILURE);
         }
+		#ifdef __linux__
+		int fd = fileno(file);
+		fsync(fd);
+		#endif
 		fclose(file);
 	}
 
@@ -87,7 +91,9 @@ __nanosec remove_files(FILES amount) {
 	}
 
 	// flush FS buffers and free pagecaches
-	// system("sync; echo 1 > /proc/sys/vm/drop_caches"); 
+	#ifdef __linux__
+	system("sync; echo 3 > /proc/sys/vm/drop_caches"); 
+	#endif
 
     // measuring the delition of `amount` files
 
@@ -98,6 +104,9 @@ __nanosec remove_files(FILES amount) {
 		if (remove(file_name) != 0) {
 			fprintf(stderr, "Failed to remove \"%s\" file\n", file_name);
 		}
+		#ifdef __linux__
+		sync();
+		#endif
 	}
 	end = _clock();
 
@@ -169,6 +178,9 @@ __nanosec write_seq(BYTES bytes, BYTES buffer_size) {
 	BYTES rest = bytes % buffer_size;
 
 	file = fopen("write_data", "w");
+	#ifdef __linux__
+	int fd = fileno(file);
+	#endif
 	if (file == NULL) {
 		fprintf(stderr, "Error opening file 'write_data'.\n");
 		exit(EXIT_FAILURE);
@@ -179,11 +191,17 @@ __nanosec write_seq(BYTES bytes, BYTES buffer_size) {
 
 	for (BYTES i = 0; i < iterations; i++) {
 		fwrite(buffer, buffer_size, 1, file);
+		#ifdef __linux__
+		fsync(fd);
+		#endif
 	}
 	if (rest > 0) {
 		if (rest != fwrite(buffer, sizeof(char), rest, file)) {
 			fprintf(stderr, "Failed to write the rest of the file\n");
 		}
+		#ifdef __linux__
+		fsync(fd);
+		#endif
 	}
 
 	end = _clock();
@@ -209,6 +227,9 @@ __nanosec write_seq(BYTES bytes, BYTES buffer_size) {
     3. Repeats steps 1-2 until the 'remaining_bytes' amount of bytes is written.
 */
 __nanosec write_randomly(FILE *file, BYTES remaining_bytes, BYTES buffer_size, BYTES lower_write_limit, BYTES upper_write_limit) {
+	#ifdef __linux__
+	int fd = fileno(file);
+	#endif
 	BYTES size = get_file_size(file);
 
 	__nanosec start, end;
@@ -221,11 +242,17 @@ __nanosec write_randomly(FILE *file, BYTES remaining_bytes, BYTES buffer_size, B
 		fseek(file, position, SEEK_SET);
 		BYTES bytes_to_write = sample_in_range(lower_write_limit, upper_write_limit);
 		write_bytes(file, bytes_to_write, buffer_size);
+		#ifdef __linux__
+		fsync(fd);
+		#endif
 		remaining_bytes -= bytes_to_write;
 	}
 	position = (long int) sample_in_range(0, size - upper_write_limit);
 	fseek(file, position, SEEK_SET);
 	write_bytes(file, remaining_bytes, buffer_size);
+	#ifdef __linux__
+	fsync(fd);
+	#endif
 
 	end = _clock();
 
@@ -234,8 +261,6 @@ __nanosec write_randomly(FILE *file, BYTES remaining_bytes, BYTES buffer_size, B
 
 /*
     Measure sequential read of `bytes` bytes.
-
-    File is first created by the function, read and then deleted.
 */
 __nanosec read_seq(FILE *file, BYTES bytes, BYTES buffer_size) {
 	BYTES iterations = bytes / buffer_size;
@@ -256,6 +281,7 @@ __nanosec read_seq(FILE *file, BYTES bytes, BYTES buffer_size) {
 		if (buffer_size != fread(buffer, sizeof(char), buffer_size, file)) {
 			fprintf(stderr, "Failed to read on iteration #%llu\n", i);
 		}
+		// system("sync; echo 1 > /proc/sys/vm/drop_caches"); 
 	}
 	if (rest > 0) {
 		if (rest != fread(buffer, sizeof(char), rest, file)) {
@@ -292,6 +318,7 @@ __nanosec read_randomly(FILE *file, BYTES remaining_bytes, BYTES buffer_size, BY
 		position = (long int) sample_in_range(0, size - upper_read_limit);
 		fseek(file, position, SEEK_SET);
 		BYTES bytes_to_read = sample_in_range(lower_read_limit, upper_read_limit);
+		// system("sync; echo 1 > /proc/sys/vm/drop_caches"); 
 		read_bytes(file, bytes_to_read, buffer_size);
 		remaining_bytes -= bytes_to_read;
 	}
