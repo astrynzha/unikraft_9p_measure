@@ -456,7 +456,6 @@ void read_randomly_runner(const char *filename, BYTES bytes, BYTES *buffer_size_
         char fname[17+DIGITS(i)];
         sprintf(fname, "measurement_%lu.csv", i);
         FILE *fp_measurement = fopen(fname, "w");
-        fprintf(fp_measurement, "m%lu\n", i);
 
         BYTES buffer_size = buffer_size_arr[i];
 
