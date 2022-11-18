@@ -1,0 +1,24 @@
+# b uk_9pfs_open
+# b uk_9pfs_close
+# b uk_9pfs_read
+# b uk_9pfs_write
+# b uk_9pfs_seek
+# b uk_9pfs_ioctl
+# b uk_9pfs_fsync
+# b uk_9pfs_readdir
+# b uk_9pfs_lookup
+# b uk_9pfs_create
+# b uk_9pfs_remove
+# b uk_9pfs_rename
+# b uk_9pfs_mkdir
+# b uk_9pfs_rmdir
+# b uk_9pfs_getattr
+# b uk_9pfs_setattr
+# b uk_9pfs_inactive
+# b uk_9pfs_truncate
+# b uk_9pfs_link
+# b uk_9pfs_cache
+# b uk_9pfs_fallocate
+# b uk_9pfs_readlink
+# b uk_9pfs_symlin
+

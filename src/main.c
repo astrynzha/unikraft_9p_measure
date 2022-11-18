@@ -27,12 +27,12 @@ BYTES bpow(BYTES base, BYTES exp)
 int main(int argc, char *argv[])
 {
 	#ifdef __linux__
-	char platform[6] = "Linux";	
+	char platform[6] = "Linux";
     chdir("guest_fs");
 	#elif __Unikraft__
 	char platform[9] = "Unikraft";
 	#endif
-	DEBUG_PRINT("__________________________\n"); 
+	DEBUG_PRINT("__________________________\n");
 	DEBUG_PRINT("Running in DEBUGMODE\n");
 	DEBUG_PRINT("Running on %s\n", platform);
 	DEBUG_PRINT("__________________________\n");
@@ -45,26 +45,30 @@ int main(int argc, char *argv[])
 	for (int i = 0; i < max_pow; i++) { // buffer_sizes = {16, 32, 64, ..., 2^max_pow}
 		amount[i] = bpow(2, i + 1);
 		printf("%lu\n", amount[i]);
-	} 
+	}
 
-	create_files_runner(amount, 17, 10);
-	remove_files_runner(amount, 17, 10);
-	list_dir_runner(amount, 17, 10);
+	// create_files_runner(amount, 17, 10);
+	// remove_files_runner(amount, 17, 10);
+	// list_dir_runner(amount, 17, 10);
 
-	int max_pow2 = 27;
-	BYTES buffer_sizes[max_pow2-3];
-	puts("buffer sizes");
-	for (int i = 0; i < max_pow2-3; i++) { // buffer_sizes = {16, 32, 64, ..., 2^max_pow}
-		buffer_sizes[i] = bpow(2, i+4);
-		printf("%llu\n", buffer_sizes[i]);
-	} 
+	int max_pow2 = 20;
+	int min_pow2 = 8;
+	int arr_size = max_pow2 - min_pow2 + 1;
+	BYTES buffer_sizes[arr_size];
+	printf("buffer sizes\n");
+	for (int i = min_pow2; i < max_pow2 + 1; i++) { // buffer_sizes = {16, 32, 64, ..., 2^max_pow}
+		buffer_sizes[i-min_pow2] = bpow(2, i);
+		printf("%llu\n", buffer_sizes[i - min_pow2]);
+	}
 
+	// write_seq_runner(MB(100), buffer_sizes, arr_size, 5);
+	write_randomly_runner("1G_file", MB(10),
+			buffer_sizes, arr_size,
+			MB(0.01), MB(0.1),
+			5);
 
-	write_seq_runner(MB(100), buffer_sizes, max_pow2-3, 10);
-	write_randomly_runner("data_100M", MB(100), buffer_sizes, max_pow2-3, MB(0.01), MB(0.1), 10);
-
-	read_seq_runner("data_100M", MB(100), buffer_sizes, max_pow2-3, 10);	
-	read_randomly_runner("data_100M", MB(100), buffer_sizes, max_pow2-3, MB(0.01), MB(0.1), 10);
+	// read_seq_runner("1G_file", MB(100), buffer_sizes, arr_size, 5);
+	// read_randomly_runner("1G_file", MB(100), buffer_sizes, arr_size, MB(0.01), MB(0.1), 5);
 
 	return 0;
 }

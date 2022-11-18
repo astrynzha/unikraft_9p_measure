@@ -9,30 +9,28 @@
 #include <string.h>
 #endif // DEBUGMODE
 
-
 #include "helper_functions.h"
 #include "measurement_scenarios.h"
 #include "time_functions.h"
 
-
 void create_files_runner(FILES *amount_arr, size_t arr_size, int measurements) {
 
-    // create a separate directory for this experiment
+  // create a separate directory for this experiment
 
-    #ifdef __Unikraft__
-    char dir_name[] = "create_files_unikraft";
-    #elif __linux__
-    char dir_name[] = "create_files_linux";
-    #endif 
-    mkdir(dir_name, 0777);
-    if (chdir(dir_name) == -1) {
-        printf("Error: could not change directory to %s\n", dir_name);
-    }
+#ifdef __Unikraft__
+  char dir_name[] = "create_files_unikraft";
+#elif __linux__
+  char dir_name[] = "create_files_linux";
+#endif
+  mkdir(dir_name, 0777);
+  if (chdir(dir_name) == -1) {
+    printf("Error: could not change directory to %s\n", dir_name);
+  }
 
-    char fname_results[] = "results.csv";
+  char fname_results[] = "results.csv";
     FILE *fp_results = fopen(fname_results, "w");
 
-    for (size_t i = 0; i < arr_size; i++) { // conducts measurement for each given amount of files 
+    for (size_t i = 0; i < arr_size; i++) { // conducts measurement for each given amount of files
         char fname[17+DIGITS(i)];
         sprintf(fname, "measurement_%lu.csv", i);
         FILE *fp_measurement = fopen(fname, "w");
@@ -46,13 +44,13 @@ void create_files_runner(FILES *amount_arr, size_t arr_size, int measurements) {
         __nanosec total = 0;
 
         // measures 'measurements' times, how long the creation 'amount' of files takes
-        for (int i = 0; i < measurements; i++) { 
+        for (int i = 0; i < measurements; i++) {
             printf("    Measurement %d/%d running...\n", i + 1, measurements);
 
             result = create_files(amount);
 
             fprintf(fp_measurement, "%lu\n", result);
-            result_ms = nanosec_to_milisec(result); 
+            result_ms = nanosec_to_milisec(result);
             printf("    Result: %lums %.3fs\n", result_ms, (double) result_ms / 1000);
 
             total += result;
@@ -61,7 +59,7 @@ void create_files_runner(FILES *amount_arr, size_t arr_size, int measurements) {
         total /= measurements;
         fprintf(fp_results, "%lu,%lu\n", amount, total);
         __nanosec total_ms = nanosec_to_milisec(total);
-    
+
         printf("%d measurements successfully conducted\n", measurements);
         printf("Creating %lu files took on average: %lums %.3fs \n", amount, total_ms, (double) total_ms / 1000);
 
@@ -80,16 +78,16 @@ void remove_files_runner(FILES *amount_arr, size_t arr_size, int measurements) {
     char dir_name[] = "remove_files_unikraft";
     #elif __linux__
     char dir_name[] = "remove_files_linux";
-    #endif 
+    #endif
     mkdir(dir_name, 0777);
     if (chdir(dir_name) == -1) {
         printf("Error: could not change directory to %s\n", dir_name);
     }
 
     char fname_results[] = "results.csv";
-    FILE *fp_results = fopen(fname_results, "w");
+   FILE *fp_results = fopen(fname_results, "w");
 
-    for (size_t i = 0; i < arr_size; i++) { // conducts measurement for each amount of files 
+    for (size_t i = 0; i < arr_size; i++) { // conducts measurement for each amount of files
         char fname[17+DIGITS(i)];
         sprintf(fname, "measurement_%lu.csv", i);
         FILE *fp_measurement = fopen(fname, "w");
@@ -111,7 +109,7 @@ void remove_files_runner(FILES *amount_arr, size_t arr_size, int measurements) {
             result = remove_files(amount);
 
             fprintf(fp_measurement, "%lu\n", result);
-            result_ms = nanosec_to_milisec(result); 
+            result_ms = nanosec_to_milisec(result);
             printf("Result: %lums %.3fs\n", result_ms, (double) result_ms / 1000);
 
             total += result;
@@ -139,9 +137,9 @@ void list_dir_runner(FILES *amount_arr, size_t arr_size, int measurements) {
     char dir_name[] = "list_dir_unikraft";
     #elif __linux__
     char dir_name[] = "list_dir_linux";
-    #endif 
+    #endif
     mkdir(dir_name, 0777);
-    if (chdir(dir_name) == -1) {
+   if (chdir(dir_name) == -1) {
         printf("Error: could not change directory to %s\n", dir_name);
     }
 
@@ -151,7 +149,7 @@ void list_dir_runner(FILES *amount_arr, size_t arr_size, int measurements) {
     FILE *fp_results = fopen(fname_results, "w");
 
 
-    for (size_t i = 0; i < arr_size; i++) { // conducts measurement for each amount of files 
+    for (size_t i = 0; i < arr_size; i++) { // conducts measurement for each amount of files
 
         // directory for files to create and list in
 
@@ -167,7 +165,7 @@ void list_dir_runner(FILES *amount_arr, size_t arr_size, int measurements) {
 
         FILES file_amount = amount_arr[i];
 
-        // initializing dummy files 
+        // initializing dummy files
 
         int max_file_name_length = 7 + DIGITS(file_amount - 1);
         char *file_names = (char*) malloc(file_amount*max_file_name_length); // implicit 2D array
@@ -187,15 +185,15 @@ void list_dir_runner(FILES *amount_arr, size_t arr_size, int measurements) {
         // measuring 'measurements' times the listing of 'file_amount' files takes
         for (int i = 0; i < measurements; i++) {
             #ifdef __linux__
-            system("sync; echo 3 > /proc/sys/vm/drop_caches"); 
+            system("sync; echo 3 > /proc/sys/vm/drop_caches");
             #endif
 
             printf("Measurement %d/%d running...\n", i + 1, measurements);
 
             result = list_dir(file_amount);
 
-            fprintf(fp_measurement, "%lu\n", result); 
-            result_ms = nanosec_to_milisec(result); 
+            fprintf(fp_measurement, "%lu\n", result);
+            result_ms = nanosec_to_milisec(result);
             printf("Result: %lums %.3fs\n", result_ms, (double) result_ms / 1000);
 
             total += result;
@@ -228,7 +226,9 @@ void list_dir_runner(FILES *amount_arr, size_t arr_size, int measurements) {
     chdir("..");
 }
 
-void write_seq_runner(BYTES bytes, BYTES *buffer_size_arr, size_t arr_size, int measurements) {
+void write_seq_runner(BYTES bytes, BYTES *buffer_size_arr, size_t arr_size,
+		      int measurements)
+{
 
     // create a separate directory for this experiment
 
@@ -236,7 +236,7 @@ void write_seq_runner(BYTES bytes, BYTES *buffer_size_arr, size_t arr_size, int 
     char dir_name[] = "write_seq_unikraft";
     #elif __linux__
     char dir_name[] = "write_seq_linux";
-    #endif 
+    #endif
     mkdir(dir_name, 0777);
     if (chdir(dir_name) == -1) {
         printf("Error: could not change directory to %s\n", dir_name);
@@ -245,7 +245,7 @@ void write_seq_runner(BYTES bytes, BYTES *buffer_size_arr, size_t arr_size, int 
     char fname_results[] = "results.csv";
     FILE *fp_results = fopen(fname_results, "w");
 
-    for (size_t i = 0; i < arr_size; i++) { // conducts measurement for each buffer_size 
+    for (size_t i = 0; i < arr_size; i++) { // conducts measurement for each buffer_size
         char fname[17+DIGITS(i)];
         sprintf(fname, "measurement_%lu.csv", i);
         FILE *fp_measurement = fopen(fname, "w");
@@ -261,16 +261,20 @@ void write_seq_runner(BYTES bytes, BYTES *buffer_size_arr, size_t arr_size, int 
         __nanosec total = 0;
 
         for (int i = 0; i < measurements; i++) {
-            printf("Measurement %d/%d running...\n", i + 1, measurements);
+		#ifdef __linux__
+		system("sync; echo 3 > /proc/sys/vm/drop_caches");
+		#endif
 
-            result = write_seq(bytes, buffer_size);
+		printf("Measurement %d/%d running...\n", i + 1, measurements);
 
-            fprintf(fp_measurement, "%lu\n", result);
-            result_ms = nanosec_to_milisec(result); 
-            printf("Result: %lums %.3fs\n", result_ms, (double) result_ms / 1000);
+		result = write_seq(bytes, buffer_size);
 
-            total += result;
-        }
+		fprintf(fp_measurement, "%lu\n", result);
+		result_ms = nanosec_to_milisec(result);
+		printf("Result: %lums %.3fs\n", result_ms, (double) result_ms / 1000);
+
+		total += result;
+	}
 
         total /= measurements;
         fprintf(fp_results, "%llu,%lu\n", buffer_size, total);
@@ -301,14 +305,14 @@ void write_randomly_runner(const char *filename, BYTES bytes, BYTES *buffer_size
     char dir_name[] = "write_rand_unikraft";
     #elif __linux__
     char dir_name[] = "write_rand_linux";
-    #endif 
+    #endif
     mkdir(dir_name, 0777);
     if (chdir(dir_name) == -1) {
         printf("Error: could not change directory to %s\n", dir_name);
     }
 
-    char fname_results[] = "results.csv";
-    FILE *fp_results = fopen(fname_results, "w");
+  char fname_results[] = "results.csv";
+  FILE *fp_results = fopen(fname_results, "w");
 
     for (size_t i = 0; i < arr_size; i++) { // conducts measurement for each buffer_size
         char fname[17+DIGITS(i)];
@@ -326,16 +330,20 @@ void write_randomly_runner(const char *filename, BYTES bytes, BYTES *buffer_size
         __nanosec total = 0;
 
         for (int i = 0; i < measurements; i++) {
-            printf("Measurement %d/%d running...\n", i + 1, measurements);
+		#ifdef __linux__
+		system("sync; echo 3 > /proc/sys/vm/drop_caches");
+		#endif
 
-            srand(time(NULL)); // setting random seed
-            result = write_randomly(file, bytes, buffer_size, lower_write_limit, upper_write_limit);
+		printf("Measurement %d/%d running...\n", i + 1, measurements);
 
-            fprintf(fp_measurement, "%lu\n", result);
-            result_ms = nanosec_to_milisec(result); 
-            printf("Result: %lums %.3fs\n", result_ms, (double) result_ms / 1000);
+		srand(time(NULL)); // setting random seed
+		result = write_randomly(file, bytes, buffer_size, lower_write_limit, upper_write_limit);
 
-            total += result;
+		fprintf(fp_measurement, "%lu\n", result);
+		result_ms = nanosec_to_milisec(result);
+		printf("Result: %lums %.3fs\n", result_ms, (double) result_ms / 1000);
+
+		total += result;
         }
 
         total /= measurements;
@@ -373,7 +381,7 @@ void read_seq_runner(const char *filename, BYTES bytes,
     char dir_name[] = "read_seq_unikraft";
     #elif __linux__
     char dir_name[] = "read_seq_linux";
-    #endif 
+    #endif
     mkdir(dir_name, 0777);
     if (chdir(dir_name) == -1) {
         printf("Error: could not change directory to %s\n", dir_name);
@@ -382,7 +390,7 @@ void read_seq_runner(const char *filename, BYTES bytes,
     char fname_results[] = "results.csv";
     FILE *fp_results = fopen(fname_results, "w");
 
-    for (size_t i = 0; i < arr_size; i++) { // conducts measurement for each buffer_size 
+    for (size_t i = 0; i < arr_size; i++) { // conducts measurement for each buffer_size
         char fname[17+DIGITS(i)];
         sprintf(fname, "measurement_%lu.csv", i);
         FILE *fp_measurement = fopen(fname, "w");
@@ -399,7 +407,7 @@ void read_seq_runner(const char *filename, BYTES bytes,
 
         for (int i = 0; i < measurements; i++) {
             #ifdef __linux__
-            system("sync; echo 3 > /proc/sys/vm/drop_caches"); 
+            system("sync; echo 3 > /proc/sys/vm/drop_caches");
             #endif
             printf("Measurement %d/%d running...\n", i + 1, measurements);
 
@@ -407,7 +415,7 @@ void read_seq_runner(const char *filename, BYTES bytes,
             rewind(file);
 
             fprintf(fp_measurement, "%lu\n", result);
-            result_ms = nanosec_to_milisec(result); 
+            result_ms = nanosec_to_milisec(result);
             printf("Result: %lums %.3fs\n", result_ms, (double) result_ms / 1000);
 
             total += result;
@@ -443,7 +451,7 @@ void read_randomly_runner(const char *filename, BYTES bytes, BYTES *buffer_size_
     char dir_name[] = "read_rand_unikraft";
     #elif __linux__
     char dir_name[] = "read_rand_linux";
-    #endif 
+    #endif
     mkdir(dir_name, 0777);
     if (chdir(dir_name) == -1) {
         printf("Error: could not change directory to %s\n", dir_name);
@@ -469,7 +477,7 @@ void read_randomly_runner(const char *filename, BYTES bytes, BYTES *buffer_size_
 
         for (int i = 0; i < measurements; i++) {
             #ifdef __linux__
-            system("sync; echo 3 > /proc/sys/vm/drop_caches"); 
+            system("sync; echo 3 > /proc/sys/vm/drop_caches");
             #endif
             printf("Measurement %d/%d running...\n", i + 1, measurements);
 
@@ -477,7 +485,7 @@ void read_randomly_runner(const char *filename, BYTES bytes, BYTES *buffer_size_
             result = read_randomly(file, bytes, buffer_size, lower_read_limit, upper_read_limit);
 
             fprintf(fp_measurement, "%lu\n", result);
-            result_ms = nanosec_to_milisec(result); 
+            result_ms = nanosec_to_milisec(result);
             printf("Result: %lums %.3fs\n", result_ms, (double) result_ms / 1000);
 
             total += result;
@@ -488,7 +496,7 @@ void read_randomly_runner(const char *filename, BYTES bytes, BYTES *buffer_size_
         __nanosec total_ms = nanosec_to_milisec(total);
 
         printf("%d measurements successfully conducted\n", measurements);
-        printf("Reading %lluMB with a buffer of %lluB took on average: %lums %.3fs \n", 
+        printf("Reading %lluMB with a buffer of %lluB took on average: %lums %.3fs \n",
             B_TO_MB(bytes), buffer_size, total_ms, (double) total_ms / 1000);
 
         fclose(fp_measurement);
@@ -526,7 +534,7 @@ FILE *create_file_of_size(const char *filename, BYTES bytes) {
 			fprintf(stderr, "Failed to write the rest of the file\n");
 		}
     }
-	
+
 	fclose(file);
 
     // TODO: surround with debug guards
