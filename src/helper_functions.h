@@ -36,7 +36,7 @@ struct file_interval {
 
 BYTES get_file_size(FILE *file);
 BYTES sample_in_range(BYTES lower, BYTES upper);
-void read_bytes(FILE *file, BYTES bytes, BYTES buffer_size);
+void read_bytes(int fd, BYTES bytes, BYTES buffer_size, char *buffer);
 void write_bytes(FILE *file, BYTES bytes, BYTES buffer_size);
 void init_filenames(FILES file_amount, int max_filename_length, char *file_names);
 void slice_file(BYTES file_size, struct file_interval **intervals,

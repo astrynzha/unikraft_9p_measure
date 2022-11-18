@@ -5,8 +5,10 @@
 #include <dirent.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 
 /*
     Measure removing `amount` files.
@@ -166,8 +168,8 @@ __nanosec list_dir(FILES file_amount) {
 
     Write file is created and deleted by the function.
 */
-__nanosec write_seq(BYTES bytes, BYTES buffer_size) {
-	FILE *file;
+__nanosec write_seq(int fd, BYTES bytes, BYTES buffer_size) {
+	long long rc;
 
 	char *buffer = malloc(buffer_size);
 	if (buffer == NULL) {
@@ -177,41 +179,28 @@ __nanosec write_seq(BYTES bytes, BYTES buffer_size) {
 	BYTES iterations = bytes / buffer_size;
 	BYTES rest = bytes % buffer_size;
 
-	file = fopen("write_data", "w");
-	#ifdef __linux__
-	int fd = fileno(file);
-	#endif
-	if (file == NULL) {
-		fprintf(stderr, "Error opening file 'write_data'.\n");
-		exit(EXIT_FAILURE);
-	}
-
 	__nanosec start, end;
 	start = _clock();
 
 	for (BYTES i = 0; i < iterations; i++) {
-		fwrite(buffer, buffer_size, 1, file);
-		#ifdef __linux__
-		fsync(fd);
-		#endif
+		rc = write(fd, buffer, buffer_size);
+		if (rc == -1) {
+			fprintf(stderr, "Failed to write\n");
+		}
 	}
 	if (rest > 0) {
-		if (rest != fwrite(buffer, sizeof(char), rest, file)) {
+		rc = write(fd, buffer, rest);
+		if (rc == -1) {
 			fprintf(stderr, "Failed to write the rest of the file\n");
 		}
-		#ifdef __linux__
-		fsync(fd);
-		#endif
 	}
+
+	/* TODO: should I measure with the fsync? */
+	// fsync(fd);
 
 	end = _clock();
 
-	fclose(file);
 	free(buffer);
-
-	if (!(remove("write_data") == 0)) {
-		fprintf(stderr, "Failed to remove \"write_data\" file\n");
-	}
 
     return end - start;
 }
@@ -226,13 +215,9 @@ __nanosec write_seq(BYTES bytes, BYTES buffer_size) {
     2. Writes a random amount of bytes, sampled from range [lower_write_limit, upper_write_limit].
     3. Repeats steps 1-2 until the 'remaining_bytes' amount of bytes is written.
 */
-__nanosec write_randomly(FILE *file, BYTES size, BYTES buffer_size,
+__nanosec write_randomly(int fd, BYTES size, BYTES buffer_size,
 			 BYTES lower_write_limit, BYTES upper_write_limit)
 {
-	#ifdef __linux__
-	int fd = fileno(file);
-	#endif
-
 	struct file_interval *intervals;
 	BYTES *interval_order;
 	BYTES num_intervals;
@@ -240,25 +225,49 @@ __nanosec write_randomly(FILE *file, BYTES size, BYTES buffer_size,
 	slice_file(size, &intervals,
 		&interval_order, &num_intervals);
 
-	__nanosec start, end;
+	long long rc;
+
+	char *buffer = malloc(buffer_size);
+	if (buffer == NULL) {
+		fprintf(stderr, "Error! Memory not allocated. At %s, line %d. \n", __FILE__, __LINE__);
+		exit(EXIT_FAILURE);
+	}
+	memset(buffer, '1', buffer_size);
+	buffer[buffer_size - 1] = '\0';
+
 	BYTES off;
 	BYTES len;
 
+	__nanosec start, end;
 	start = _clock();
 
 	for (BYTES i = 0; i < num_intervals; i++) {
 		off = intervals[interval_order[i]].off;
 		len = intervals[interval_order[i]].len;
-		fseek(file, off, SEEK_SET);
-		write_bytes(file, len, buffer_size);
+		lseek(fd, off, SEEK_SET);
+
+		BYTES iterations = len / buffer_size;
+		BYTES rest = len % buffer_size;
+
+		for (BYTES i = 0; i < iterations; i++) {
+			rc = write(fd, buffer, buffer_size);
+			if (rc == -1) {
+				fprintf(stderr, "Failed to write\n");
+			}
+		}
+		if (rest > 0) {
+			rc = write(fd, buffer, rest);
+			if (rc == -1) {
+				fprintf(stderr, "Failed to write the rest of the file\n");
+			}
+		}
 	}
 
-	#ifdef __linux__
-		fsync(fd);
-	#endif
+	fsync(fd);
 
 	end = _clock();
 
+	free(buffer);
 	free(intervals);
 	free(interval_order);
 	return end - start;
@@ -267,38 +276,57 @@ __nanosec write_randomly(FILE *file, BYTES size, BYTES buffer_size,
 /*
     Measure sequential read of `bytes` bytes.
 */
-__nanosec read_seq(FILE *file, BYTES bytes, BYTES buffer_size)
+__nanosec read_seq(int fd, BYTES bytes, BYTES buffer_size)
 {
+	long long rc;
 	BYTES iterations = bytes / buffer_size;
 	BYTES rest = bytes % buffer_size;
+
 	char *buffer = malloc(buffer_size);
 	if (buffer == NULL) {
 		fprintf(stderr, "Error! Memory not allocated. At %s, line %d. \n", __FILE__, __LINE__);
 		exit(EXIT_FAILURE);
 	}
 
-    // measuring sequential read
-
 	__nanosec start, end;
 
 	start = _clock();
 
 	for (BYTES i = 0; i < iterations; i++) {
-		if (buffer_size != fread(buffer, sizeof(char), buffer_size, file)) {
-			fprintf(stderr, "Failed to read on iteration #%llu\n", i);
+		rc = read(fd, buffer, buffer_size);
+		if (rc == -1) {
+			fprintf(stderr, "errno: %s\n",
+				strerror(errno));
+			fprintf(stderr,
+			"Failed to read on iteration #%llu\n", i);
+			start = end = 0;
+			goto out;
 		}
-		// system("sync; echo 1 > /proc/sys/vm/drop_caches");
+
+		// if (buffer_size != fread(buffer, sizeof(char), buffer_size, file)) {
+		// 	fprintf(stderr, "Failed to read on iteration #%llu\n", i);
+		// }
 	}
 	if (rest > 0) {
-		if (rest != fread(buffer, sizeof(char), rest, file)) {
-			fprintf(stderr, "Failed to read the rest of the file\n");
+		rc = read(fd, buffer, rest);
+		if (rc == -1) {
+			fprintf(stderr,
+			"Failed to read the rest of the file\n");
+			start = end = 0;
+			goto out;
 		}
+		// if (rest != fread(buffer, sizeof(char), rest, file)) {
+		// 	fprintf(stderr, "Failed to read the rest of the file\n");
+		// }
 	}
+
+	// fsync(fd);
 
 	end = _clock();
 
+out:
 	free(buffer);
-    return end - start;
+	return end - start;
 }
 
 
@@ -312,27 +340,56 @@ __nanosec read_seq(FILE *file, BYTES bytes, BYTES buffer_size)
 
     File is provided by the caller.
 */
-__nanosec read_randomly(FILE *file, BYTES remaining_bytes, BYTES buffer_size, BYTES lower_read_limit, BYTES upper_read_limit) {
-	BYTES size = get_file_size(file);
+__nanosec read_randomly(int fd, BYTES size, BYTES buffer_size,
+			BYTES lower_read_limit, BYTES upper_read_limit)
+{
+	struct file_interval *intervals;
+	BYTES *interval_order;
+	BYTES num_intervals;
+
+	slice_file(size, &intervals,
+		&interval_order, &num_intervals);
 
 	__nanosec start, end;
+	BYTES off;
+	BYTES len;
+
+	char *buffer = malloc(buffer_size);
+	if (buffer == NULL) {
+		fprintf(stderr, "Error! Memory not allocated. At %s, line %d. \n", __FILE__, __LINE__);
+		exit(EXIT_FAILURE);
+	}
 
 	start = _clock();
 
-	long int position;
-	while (remaining_bytes >= upper_read_limit) {
-		position = (long int) sample_in_range(0, size - upper_read_limit);
-		fseek(file, position, SEEK_SET);
-		BYTES bytes_to_read = sample_in_range(lower_read_limit, upper_read_limit);
-		// system("sync; echo 1 > /proc/sys/vm/drop_caches");
-		read_bytes(file, bytes_to_read, buffer_size);
-		remaining_bytes -= bytes_to_read;
+	for (BYTES i = 0; i < num_intervals; i++) {
+		off = intervals[interval_order[i]].off;
+		len = intervals[interval_order[i]].len;
+		lseek(fd, off, SEEK_SET);
+		// read_bytes(fd, len, buffer_size, buffer);
+
+		long long rc;
+		BYTES iterations = len / buffer_size;
+		BYTES rest = len % buffer_size;
+
+		for (BYTES i = 0; i < iterations; i++) {
+			rc = read(fd, buffer, buffer_size);
+			if (rc == -1) {
+				puts("Failed to read\n");
+			}
+		}
+		if (rest > 0) {
+			rc = read(fd, buffer, rest);
+			if (rc == -1) {
+				puts("Failed to read\n");
+			}
+		}
 	}
-	position = sample_in_range(0, size - upper_read_limit);
-	fseek(file, position, SEEK_SET);
-	read_bytes(file, remaining_bytes, buffer_size);
 
 	end = _clock();
 
-    return end - start;
+	free(intervals);
+	free(interval_order);
+	free(buffer);
+	return end - start;
 }

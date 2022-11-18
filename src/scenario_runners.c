@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <fcntl.h>
+
 
 #ifdef DEBUGMODE
 #include <errno.h>
@@ -226,9 +228,15 @@ void list_dir_runner(FILES *amount_arr, size_t arr_size, int measurements) {
     chdir("..");
 }
 
-void write_seq_runner(BYTES bytes, BYTES *buffer_size_arr, size_t arr_size,
+void write_seq_runner(const char *filename, BYTES bytes, BYTES *buffer_size_arr, size_t arr_size,
 		      int measurements)
 {
+	int fd = open(filename, O_WRONLY);
+	if (fd == -1) {
+		fprintf(stderr, "Error opening file 'write_data'.\n");
+		exit(EXIT_FAILURE);
+	}
+
 
     // create a separate directory for this experiment
 
@@ -267,7 +275,8 @@ void write_seq_runner(BYTES bytes, BYTES *buffer_size_arr, size_t arr_size,
 
 		printf("Measurement %d/%d running...\n", i + 1, measurements);
 
-		result = write_seq(bytes, buffer_size);
+		result = write_seq(fd, bytes, buffer_size);
+		lseek(fd, 0, SEEK_SET);
 
 		fprintf(fp_measurement, "%lu\n", result);
 		result_ms = nanosec_to_milisec(result);
@@ -287,15 +296,16 @@ void write_seq_runner(BYTES bytes, BYTES *buffer_size_arr, size_t arr_size,
     }
 
     fclose(fp_results);
+	close(fd);
     chdir("..");
 }
 
 void write_randomly_runner(const char *filename, BYTES bytes, BYTES *buffer_size_arr,
-    size_t arr_size, BYTES lower_write_limit, BYTES upper_write_limit, int measurements) {
-	FILE *file;
-	file = fopen(filename, "r+");
-	if (file == NULL) {
-		fprintf(stderr, "Error opening file '%s'.\n", filename);
+    size_t arr_size, BYTES lower_write_limit, BYTES upper_write_limit, int measurements)
+{
+	int fd = open(filename, O_WRONLY);
+	if (fd == -1) {
+		fprintf(stderr, "Error opening file 'write_data'.\n");
 		exit(EXIT_FAILURE);
 	}
 
@@ -337,7 +347,7 @@ void write_randomly_runner(const char *filename, BYTES bytes, BYTES *buffer_size
 		printf("Measurement %d/%d running...\n", i + 1, measurements);
 
 		srand(time(NULL)); // setting random seed
-		result = write_randomly(file, bytes, buffer_size, lower_write_limit, upper_write_limit);
+		result = write_randomly(fd, bytes, buffer_size, lower_write_limit, upper_write_limit);
 
 		fprintf(fp_measurement, "%lu\n", result);
 		result_ms = nanosec_to_milisec(result);
@@ -358,7 +368,7 @@ void write_randomly_runner(const char *filename, BYTES bytes, BYTES *buffer_size
     }
 
     fclose(fp_results);
-	fclose(file);
+	close(fd);
     chdir("..");
 }
 
@@ -368,12 +378,11 @@ void write_randomly_runner(const char *filename, BYTES bytes, BYTES *buffer_size
 void read_seq_runner(const char *filename, BYTES bytes,
     BYTES *buffer_size_arr, size_t arr_size, int measurements) {
 
-    FILE *file = fopen(filename, "r");
-    if (file == NULL) {
+    int fd = open(filename, O_RDONLY);
+    if (fd == -1) {
         fprintf(stderr, "Error opening file '%s'.\n", filename);
         exit(EXIT_FAILURE);
     }
-
 
     // create a separate directory for this experiment
 
@@ -411,8 +420,8 @@ void read_seq_runner(const char *filename, BYTES bytes,
             #endif
             printf("Measurement %d/%d running...\n", i + 1, measurements);
 
-            result = read_seq(file, bytes, buffer_size);
-            rewind(file);
+            result = read_seq(fd, bytes, buffer_size);
+	    lseek(fd, 0, SEEK_SET);
 
             fprintf(fp_measurement, "%lu\n", result);
             result_ms = nanosec_to_milisec(result);
@@ -432,15 +441,24 @@ void read_seq_runner(const char *filename, BYTES bytes,
     }
 
     fclose(fp_results);
-    fclose(file);
+    close(fd);
     chdir("..");
 }
 
-void read_randomly_runner(const char *filename, BYTES bytes, BYTES *buffer_size_arr,
-    size_t arr_size, BYTES lower_read_limit, BYTES upper_read_limit, int measurements) {
-	FILE *file;
-	file = fopen(filename, "r");
-	if (file == NULL) {
+void read_randomly_runner(const char *filename, BYTES bytes,
+			  BYTES *buffer_size_arr, size_t arr_size,
+			  BYTES lower_read_limit, BYTES upper_read_limit,
+			  int measurements)
+{
+	// FILE *file;
+	// file = fopen(filename, "r");
+	// if (file == NULL) {
+	// 	fprintf(stderr, "Error opening file '%s'.\n", filename);
+	// 	exit(EXIT_FAILURE);
+	// }
+
+	int fd = open(filename, O_RDONLY);
+	if (fd == -1) {
 		fprintf(stderr, "Error opening file '%s'.\n", filename);
 		exit(EXIT_FAILURE);
 	}
@@ -482,7 +500,7 @@ void read_randomly_runner(const char *filename, BYTES bytes, BYTES *buffer_size_
             printf("Measurement %d/%d running...\n", i + 1, measurements);
 
             srand(time(NULL)); // setting random seed
-            result = read_randomly(file, bytes, buffer_size, lower_read_limit, upper_read_limit);
+            result = read_randomly(fd, bytes, buffer_size, lower_read_limit, upper_read_limit);
 
             fprintf(fp_measurement, "%lu\n", result);
             result_ms = nanosec_to_milisec(result);
@@ -503,7 +521,7 @@ void read_randomly_runner(const char *filename, BYTES bytes, BYTES *buffer_size_
     }
 
     fclose(fp_results);
-	fclose(file);
+	close(fd);
     chdir("..");
 }
 

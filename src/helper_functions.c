@@ -30,26 +30,24 @@ BYTES sample_in_range(BYTES lower, BYTES upper) {
 /*
     Reads `bytes` bytes with a 1KB buffer.
 */
-void read_bytes(FILE *file, BYTES bytes, BYTES buffer_size) {
-	char *buffer = malloc(buffer_size);
-	if (buffer == NULL) {
-		fprintf(stderr, "Error! Memory not allocated. At %s, line %d. \n", __FILE__, __LINE__);
-		exit(EXIT_FAILURE);
-	}
+void read_bytes(int fd, BYTES bytes, BYTES buffer_size, char *buffer) {
+	long long rc;
 
-	while (bytes >= buffer_size) {
-		if (buffer_size != fread(buffer, 1, (size_t) buffer_size, file)) {
+	BYTES iterations = bytes / buffer_size;
+	BYTES rest = bytes % buffer_size;
+
+	for (BYTES i = 0; i < iterations; i++) {
+		rc = read(fd, buffer, buffer_size);
+		if (rc == -1) {
 			puts("Failed to read\n");
 		}
-		bytes -= buffer_size;
 	}
-    BYTES rest = bytes % buffer_size;
-    if (rest > 0) {
-        if (rest != fread(buffer, sizeof(char), (size_t) rest, file)) {
-            puts("Failed to read");
-        }
-    }
-	free(buffer);
+	if (rest > 0) {
+		rc = read(fd, buffer, rest);
+		if (rc == -1) {
+			puts("Failed to read\n");
+		}
+	}
 }
 
 /*
@@ -61,13 +59,12 @@ void write_bytes(FILE *file, BYTES bytes, BYTES buffer_size)
 	int fd = fileno(file);
 
 	char *buffer = malloc(buffer_size);
-	memset(buffer, '1', buffer_size);
-	buffer[buffer_size - 1] = '\0';
-
 	if (buffer == NULL) {
 		fprintf(stderr, "Error! Memory not allocated. At %s, line %d. \n", __FILE__, __LINE__);
 		exit(EXIT_FAILURE);
 	}
+	memset(buffer, '1', buffer_size);
+	buffer[buffer_size - 1] = '\0';
 
 	while (bytes >= buffer_size) {
 		rc = write(fd, buffer, buffer_size);
@@ -124,7 +121,7 @@ void slice_file(BYTES file_size, struct file_interval **intervals,
 		BYTES **interval_order, BYTES *num_intervals)
 {
 	// BYTES interval_len = MB(1);
-	BYTES interval_len = MB(1);
+	BYTES interval_len = KB(10);
 	BYTES full_intervals = file_size / interval_len;
 	BYTES total_intervals;
 

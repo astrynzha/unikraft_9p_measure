@@ -11,7 +11,7 @@ void create_files_runner(FILES *amount_arr, size_t arr_size, int measurements);
 void remove_files_runner(FILES *amount_arr, size_t arr_size, int measurements);
 void list_dir_runner(FILES *amount_arr, size_t arr_size, int measurements);
 
-void write_seq_runner(BYTES bytes, BYTES *buffer_size_arr, size_t arr_size,
+void write_seq_runner(const char *filename, BYTES bytes, BYTES *buffer_size_arr, size_t arr_size,
     int measurements);
 void write_randomly_runner(const char *filename, BYTES bytes, BYTES *buffer_size_arr,
     size_t arr_size, BYTES lower_write_limit, BYTES upper_write_limit, int measurements);
