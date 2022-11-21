@@ -51,8 +51,8 @@ int main(int argc, char *argv[])
 	// remove_files_runner(amount, 17, 10);
 	// list_dir_runner(amount, 17, 10);
 
-	int max_pow2 = 13;
-	int min_pow2 = 8;
+	int max_pow2 = 20;
+	int min_pow2 = 14;
 	int arr_size = max_pow2 - min_pow2 + 1;
 	BYTES buffer_sizes[arr_size];
 	printf("buffer sizes\n");
@@ -61,16 +61,16 @@ int main(int argc, char *argv[])
 		printf("%llu\n", buffer_sizes[i - min_pow2]);
 	}
 
-	write_seq_runner("1G_file", GB(1), buffer_sizes, arr_size, 5);
+	write_seq_runner("1G_file", GB(1), buffer_sizes, arr_size, 1);
 	write_randomly_runner("1G_file", GB(1),
 			buffer_sizes, arr_size,
 			MB(0.01), MB(0.1),
-			5);
+			1);
 
-	read_seq_runner("1G_file", GB(1), buffer_sizes, arr_size, 5);
+	read_seq_runner("1G_file", GB(1), buffer_sizes, arr_size, 1);
 	read_randomly_runner("1G_file", GB(1),
 		buffer_sizes, arr_size, MB(0.01),
-		MB(0.1), 5);
+		MB(0.1), 1);
 
 	return 0;
 }

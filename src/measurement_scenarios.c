@@ -249,7 +249,7 @@ __nanosec write_randomly(int fd, BYTES size, BYTES buffer_size,
 		BYTES iterations = len / buffer_size;
 		BYTES rest = len % buffer_size;
 
-		for (BYTES i = 0; i < iterations; i++) {
+		for (BYTES j = 0; j < iterations; j++) {
 			rc = write(fd, buffer, buffer_size);
 			if (rc == -1) {
 				fprintf(stderr, "Failed to write\n");
