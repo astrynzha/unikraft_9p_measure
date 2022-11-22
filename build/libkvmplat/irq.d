@@ -1,0 +1,88 @@
+cmd_/home/strynzha/unikraft_9p_measure/build/libkvmplat/irq.o := ""gcc  -nostdlib -U __linux__ -U __FreeBSD__ -U __sun__ -fno-stack-protector -Wall -Wextra -D __Unikraft__ -DUK_CODENAME="Phoebe" -DUK_VERSION=0.10 -DUK_FULLVERSION=0.10.0~43e675b  -fno-tree-sra -fno-split-stack -nostdinc -O2 -fno-omit-frame-pointer -fno-PIC    -I/home/strynzha/unikraft_9p_measure/build/include -I/home/strynzha/.unikraft/unikraft/arch/x86/x86_64/include -I/home/strynzha/.unikraft/unikraft/include  -I/home/strynzha/.unikraft/unikraft/lib/devfs/include -I/home/strynzha/.unikraft/unikraft/lib/posix-process/include -I/home/strynzha/.unikraft/unikraft/lib/posix-process/musl-imported/include -I/home/strynzha/.unikraft/unikraft/lib/posix-process/musl-imported/arch/generic -I/home/strynzha/.unikraft/unikraft/lib/posix-user/musl-imported/include -I/home/strynzha/.unikraft/unikraft/lib/syscall_shim/include -I/home/strynzha/.unikraft/unikraft/lib/ukalloc/include -I/home/strynzha/.unikraft/unikraft/lib/ukallocbbuddy/include -I/home/strynzha/.unikraft/unikraft/lib/ukargparse/include -I/home/strynzha/.unikraft/unikraft/lib/ukboot/include -I/home/strynzha/.unikraft/unikraft/lib/ukbus/include -I/home/strynzha/.unikraft/unikraft/lib/ukdebug/include -I/home/strynzha/.unikraft/unikraft/lib/uklibparam/include -I/home/strynzha/.unikraft/unikraft/lib/uklock/include -I/home/strynzha/.unikraft/unikraft/lib/uksched/include -I/home/strynzha/.unikraft/unikraft/lib/ukschedcoop/include -I/home/strynzha/.unikraft/unikraft/lib/uksglist/include -I/home/strynzha/.unikraft/unikraft/lib/uksignal/include -I/home/strynzha/.unikraft/unikraft/lib/uksp/include -I/home/strynzha/.unikraft/unikraft/lib/ukstore/include -I/home/strynzha/.unikraft/unikraft/lib/uktime/include -I/home/strynzha/.unikraft/unikraft/lib/uktime/musl-imported/include -I/home/strynzha/.unikraft/unikraft/lib/uktimeconv/include -I/home/strynzha/.unikraft/unikraft/lib/vfscore/include -I/home/strynzha/.unikraft/libs/libnewlib/include -I/home/strynzha/.unikraft/libs/libnewlib/musl-imported/include -I/home/strynzha/.unikraft/libs/libnewlib/musl-imported/arch/generic -I/home/strynzha/.unikraft/libs/libnewlib/musl-imported/arch/x86_64 -I/home/strynzha/unikraft_9p_measure/build/libnewlibc/origin/newlib-2.5.0.20170922/newlib/libc/include  -I/home/strynzha/.unikraft/unikraft/plat/kvm/include -I/home/strynzha/.unikraft/unikraft/plat/common/include -I/home/strynzha/.unikraft/unikraft/plat/drivers/include    -D__X86_64__ -m64 -mno-red-zone -fno-asynchronous-unwind-tables  -fno-reorder-blocks -mtune=generic  -DCC_VERSION=9.3  -DMISSING_SYSCALL_NAMES -DMALLOC_PROVIDED -D_POSIX_REALTIME_SIGNALS -D_LDBL_EQ_DBL -D_HAVE_LONG_DOUBLE -Wno-char-subscripts -D__DYNAMIC_REENT__ -DCONFIG_UK_NETDEV_SCRATCH_SIZE=0  -DKVMPLAT      -g3 -D__LIBNAME__=libkvmplat -D__BASENAME__=irq.c -c /home/strynzha/.unikraft/unikraft/plat/kvm/irq.c -o /home/strynzha/unikraft_9p_measure/build/libkvmplat/irq.o -Wp,-MD,/home/strynzha/unikraft_9p_measure/build/libkvmplat/.irq.o.d
+
+source_/home/strynzha/unikraft_9p_measure/build/libkvmplat/irq.o := /home/strynzha/.unikraft/unikraft/plat/kvm/irq.c
+
+deps_/home/strynzha/unikraft_9p_measure/build/libkvmplat/irq.o := \
+    $(wildcard include/config/kvm/max/irq/handler/entries.h) \
+  /home/strynzha/.unikraft/libs/libnewlib/include/stdlib.h \
+  /home/strynzha/unikraft_9p_measure/build/libnewlibc/origin/newlib-2.5.0.20170922/newlib/libc/include/stdlib.h \
+    $(wildcard include/config/libukalloc/ifstats/perlib.h) \
+  /home/strynzha/unikraft_9p_measure/build/libnewlibc/origin/newlib-2.5.0.20170922/newlib/libc/include/machine/ieeefp.h \
+  /home/strynzha/unikraft_9p_measure/build/libnewlibc/origin/newlib-2.5.0.20170922/newlib/libc/include/_ansi.h \
+  /home/strynzha/unikraft_9p_measure/build/libnewlibc/origin/newlib-2.5.0.20170922/newlib/libc/include/newlib.h \
+  /home/strynzha/unikraft_9p_measure/build/libnewlibc/origin/newlib-2.5.0.20170922/newlib/libc/include/sys/config.h \
+  /home/strynzha/unikraft_9p_measure/build/libnewlibc/origin/newlib-2.5.0.20170922/newlib/libc/include/sys/features.h \
+  /home/strynzha/unikraft_9p_measure/build/libnewlibc/origin/newlib-2.5.0.20170922/newlib/libc/include/_newlib_version.h \
+  /home/strynzha/.unikraft/libs/libnewlib/include/stddef.h \
+  /home/strynzha/unikraft_9p_measure/build/libnewlibc/origin/newlib-2.5.0.20170922/newlib/libc/include/sys/reent.h \
+  /home/strynzha/unikraft_9p_measure/build/libnewlibc/origin/newlib-2.5.0.20170922/newlib/libc/include/_ansi.h \
+  /home/strynzha/.unikraft/libs/libnewlib/include/__stddef_max_align_t.h \
+  /home/strynzha/.unikraft/libs/libnewlib/include/sys/_types.h \
+  /home/strynzha/.unikraft/libs/libnewlib/include/uk/_types.h \
+  /home/strynzha/.unikraft/unikraft/lib/uktime/include/uk/time_types.h \
+  /home/strynzha/unikraft_9p_measure/build/libnewlibc/origin/newlib-2.5.0.20170922/newlib/libc/include/stdint.h \
+  /home/strynzha/unikraft_9p_measure/build/libnewlibc/origin/newlib-2.5.0.20170922/newlib/libc/include/machine/_default_types.h \
+  /home/strynzha/unikraft_9p_measure/build/libnewlibc/origin/newlib-2.5.0.20170922/newlib/libc/include/sys/_intsup.h \
+  /home/strynzha/unikraft_9p_measure/build/libnewlibc/origin/newlib-2.5.0.20170922/newlib/libc/include/sys/_stdint.h \
+  /home/strynzha/unikraft_9p_measure/build/libnewlibc/origin/newlib-2.5.0.20170922/newlib/libc/include/sys/_types.h \
+  /home/strynzha/unikraft_9p_measure/build/libnewlibc/origin/newlib-2.5.0.20170922/newlib/libc/include/machine/_types.h \
+  /home/strynzha/unikraft_9p_measure/build/libnewlibc/origin/newlib-2.5.0.20170922/newlib/libc/include/sys/lock.h \
+  /home/strynzha/unikraft_9p_measure/build/libnewlibc/origin/newlib-2.5.0.20170922/newlib/libc/include/sys/cdefs.h \
+  /home/strynzha/unikraft_9p_measure/build/libnewlibc/origin/newlib-2.5.0.20170922/newlib/libc/include/machine/stdlib.h \
+  /home/strynzha/unikraft_9p_measure/build/libnewlibc/origin/newlib-2.5.0.20170922/newlib/libc/include/alloca.h \
+  /home/strynzha/.unikraft/unikraft/include/uk/config.h \
+  /home/strynzha/.unikraft/unikraft/lib/ukalloc/include/uk/alloc.h \
+    $(wildcard include/config/libukalloc/ifstats.h) \
+    $(wildcard include/config/libukalloc/ifmalloc.h) \
+    $(wildcard include/config/libukalloc/ifstats/global.h) \
+  /home/strynzha/.unikraft/unikraft/include/uk/arch/types.h \
+  /home/strynzha/.unikraft/unikraft/arch/x86/x86_64/include/uk/asm/intsizes.h \
+  /home/strynzha/.unikraft/unikraft/arch/x86/x86_64/include/uk/asm/types.h \
+  /home/strynzha/.unikraft/unikraft/lib/ukdebug/include/uk/assert.h \
+    $(wildcard include/config/libukdebug/enable/assert.h) \
+  /home/strynzha/.unikraft/unikraft/include/uk/plat/bootstrap.h \
+  /home/strynzha/.unikraft/unikraft/include/uk/essentials.h \
+    $(wildcard include/config/libnewlibc.h) \
+    $(wildcard include/config/have/sched.h) \
+  /home/strynzha/.unikraft/libs/libnewlib/include/sys/param.h \
+  /home/strynzha/unikraft_9p_measure/build/libnewlibc/origin/newlib-2.5.0.20170922/newlib/libc/include/sys/param.h \
+  /home/strynzha/unikraft_9p_measure/build/libnewlibc/origin/newlib-2.5.0.20170922/newlib/libc/include/sys/syslimits.h \
+  /home/strynzha/unikraft_9p_measure/build/libnewlibc/origin/newlib-2.5.0.20170922/newlib/libc/include/machine/endian.h \
+  /home/strynzha/unikraft_9p_measure/build/libnewlibc/origin/newlib-2.5.0.20170922/newlib/libc/include/machine/_endian.h \
+  /home/strynzha/unikraft_9p_measure/build/libnewlibc/origin/newlib-2.5.0.20170922/newlib/libc/include/machine/param.h \
+  /home/strynzha/unikraft_9p_measure/build/libnewlibc/origin/newlib-2.5.0.20170922/newlib/libc/include/inttypes.h \
+  /home/strynzha/unikraft_9p_measure/build/libnewlibc/origin/newlib-2.5.0.20170922/newlib/libc/include/xlocale.h \
+  /home/strynzha/.unikraft/unikraft/arch/x86/x86_64/include/uk/asm/compiler.h \
+  /home/strynzha/.unikraft/unikraft/include/uk/arch/lcpu.h \
+  /home/strynzha/.unikraft/unikraft/arch/x86/x86_64/include/uk/asm/lcpu.h \
+  /home/strynzha/.unikraft/unikraft/lib/ukdebug/include/uk/print.h \
+    $(wildcard include/config/libukdebug/printd.h) \
+    $(wildcard include/config/libukdebug/printk/crit.h) \
+    $(wildcard include/config/libukdebug/printk/err.h) \
+    $(wildcard include/config/libukdebug/printk/warn.h) \
+    $(wildcard include/config/libukdebug/printk/info.h) \
+    $(wildcard include/config/libukdebug/printk.h) \
+  /home/strynzha/.unikraft/libs/libnewlib/include/stdarg.h \
+  /home/strynzha/unikraft_9p_measure/build/libnewlibc/origin/newlib-2.5.0.20170922/newlib/libc/include/errno.h \
+  /home/strynzha/unikraft_9p_measure/build/libnewlibc/origin/newlib-2.5.0.20170922/newlib/libc/include/sys/errno.h \
+  /home/strynzha/.unikraft/unikraft/include/uk/plat/lcpu.h \
+    $(wildcard include/config/have/smp.h) \
+  /home/strynzha/.unikraft/unikraft/include/uk/arch/time.h \
+  /home/strynzha/.unikraft/unikraft/include/uk/arch/limits.h \
+  /home/strynzha/.unikraft/unikraft/arch/x86/x86_64/include/uk/asm/limits.h \
+    $(wildcard include/config/stack/size/page/order.h) \
+  /home/strynzha/.unikraft/unikraft/include/uk/plat/time.h \
+    $(wildcard include/config/hz.h) \
+  /home/strynzha/.unikraft/unikraft/include/uk/plat/irq.h \
+  /home/strynzha/.unikraft/unikraft/plat/common/include/uk/plat/common/irq.h \
+  /home/strynzha/.unikraft/unikraft/plat/common/include/x86/irq.h \
+  /home/strynzha/.unikraft/unikraft/plat/common/include/x86/cpu_defs.h \
+  /home/strynzha/.unikraft/unikraft/plat/kvm/include/kvm/intctrl.h \
+  /home/strynzha/.unikraft/unikraft/include/uk/bitops.h \
+  /home/strynzha/.unikraft/unikraft/include/uk/bitcount.h \
+  /home/strynzha/.unikraft/unikraft/include/uk/arch/atomic.h \
+  /home/strynzha/.unikraft/unikraft/arch/x86/x86_64/include/uk/asm/atomic.h \
+
+/home/strynzha/unikraft_9p_measure/build/libkvmplat/irq.o: $(deps_/home/strynzha/unikraft_9p_measure/build/libkvmplat/irq.o)
+
+$(deps_/home/strynzha/unikraft_9p_measure/build/libkvmplat/irq.o):
