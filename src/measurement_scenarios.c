@@ -216,14 +216,15 @@ __nanosec write_seq(int fd, BYTES bytes, BYTES buffer_size) {
     3. Repeats steps 1-2 until the 'remaining_bytes' amount of bytes is written.
 */
 __nanosec write_randomly(int fd, BYTES size, BYTES buffer_size,
-			 BYTES lower_write_limit, BYTES upper_write_limit)
+			 BYTES interval_len)
 {
 	struct file_interval *intervals;
 	BYTES *interval_order;
 	BYTES num_intervals;
 
 	slice_file(size, &intervals,
-		&interval_order, &num_intervals);
+		&interval_order, &num_intervals,
+		interval_len);
 
 	long long rc;
 
@@ -341,14 +342,15 @@ out:
     File is provided by the caller.
 */
 __nanosec read_randomly(int fd, BYTES size, BYTES buffer_size,
-			BYTES lower_read_limit, BYTES upper_read_limit)
+			BYTES interval_len)
 {
 	struct file_interval *intervals;
 	BYTES *interval_order;
 	BYTES num_intervals;
 
 	slice_file(size, &intervals,
-		&interval_order, &num_intervals);
+		&interval_order, &num_intervals,
+		interval_len);
 
 	__nanosec start, end;
 	BYTES off;

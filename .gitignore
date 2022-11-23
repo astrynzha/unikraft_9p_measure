@@ -1,0 +1,6 @@
+build/
+/.cache/**
+/guest_fs/1G_file
+/9p_measure
+.config
+.config.old

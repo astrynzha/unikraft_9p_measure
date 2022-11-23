@@ -52,25 +52,61 @@ int main(int argc, char *argv[])
 	// list_dir_runner(amount, 17, 10);
 
 	int max_pow2 = 20;
-	int min_pow2 = 14;
+	int min_pow2 = 4;
 	int arr_size = max_pow2 - min_pow2 + 1;
-	BYTES buffer_sizes[arr_size];
+
+	BYTES bytes_arr_FUSE[arr_size];
+	BYTES buffer_size_arr[arr_size];
+	BYTES interval_len_arr[arr_size];
+
+	BYTES bytes_arr_DAX[arr_size];
+
 	printf("buffer sizes\n");
 	for (int i = min_pow2; i < max_pow2 + 1; i++) { // buffer_sizes = {16, 32, 64, ..., 2^max_pow}
-		buffer_sizes[i-min_pow2] = bpow(2, i);
-		printf("%llu\n", buffer_sizes[i - min_pow2]);
+		buffer_size_arr[i-min_pow2] = bpow(2, i);
+		bytes_arr_FUSE[i-min_pow2] = buffer_size_arr[i-min_pow2] * bpow(2, 13);
+		bytes_arr_DAX[i-min_pow2] = bpow(2, 20 + 13);
+		// bytes_arr_DAX[i-min_pow2] = 100 * bpow(2, 20);
+		interval_len_arr[i-min_pow2] = buffer_size_arr[i-min_pow2];
+		printf("buffer_size: %llu\n\
+			bytes: %llu\n\
+			interval_len: %llu\n\
+			---------------------\n",
+			buffer_size_arr[i - min_pow2],
+			bytes_arr_FUSE[i-min_pow2],
+			interval_len_arr[i-min_pow2]);
 	}
+	int measurements = 6;
 
-	write_seq_runner("1G_file", GB(1), buffer_sizes, arr_size, 1);
-	write_randomly_runner("1G_file", GB(1),
-			buffer_sizes, arr_size,
-			MB(0.01), MB(0.1),
-			1);
+	#ifdef __linux__
 
-	read_seq_runner("1G_file", GB(1), buffer_sizes, arr_size, 1);
-	read_randomly_runner("1G_file", GB(1),
-		buffer_sizes, arr_size, MB(0.01),
-		MB(0.1), 1);
+	write_seq_runner("1G_file", bytes_arr_DAX,
+			buffer_size_arr, arr_size, measurements);
+	write_randomly_runner("1G_file", bytes_arr_DAX,
+			buffer_size_arr, interval_len_arr, arr_size,
+			measurements);
+
+	read_seq_runner("1G_file", bytes_arr_DAX,
+			buffer_size_arr, arr_size, measurements);
+	read_randomly_runner("1G_file", bytes_arr_DAX,
+			buffer_size_arr, interval_len_arr, arr_size,
+			measurements);
+
+	#elif __Unikraft__
+
+	write_seq_runner("1G_file", bytes_arr_FUSE,
+			buffer_size_arr, arr_size, measurements);
+	write_randomly_runner("1G_file", bytes_arr_FUSE,
+			buffer_size_arr, interval_len_arr, arr_size,
+			measurements);
+
+	read_seq_runner("1G_file", bytes_arr_FUSE,
+			buffer_size_arr, arr_size, measurements);
+	read_randomly_runner("1G_file", bytes_arr_FUSE,
+			buffer_size_arr, interval_len_arr, arr_size,
+			measurements);
+
+	#endif
 
 	return 0;
 }

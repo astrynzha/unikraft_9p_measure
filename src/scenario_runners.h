@@ -11,14 +11,17 @@ void create_files_runner(FILES *amount_arr, size_t arr_size, int measurements);
 void remove_files_runner(FILES *amount_arr, size_t arr_size, int measurements);
 void list_dir_runner(FILES *amount_arr, size_t arr_size, int measurements);
 
-void write_seq_runner(const char *filename, BYTES bytes, BYTES *buffer_size_arr, size_t arr_size,
-    int measurements);
-void write_randomly_runner(const char *filename, BYTES bytes, BYTES *buffer_size_arr,
-    size_t arr_size, BYTES lower_write_limit, BYTES upper_write_limit, int measurements);
+void write_seq_runner(const char *filename, BYTES *bytes_arr, BYTES *buffer_size_arr,
+			size_t arr_size,
+			int measurements);
+void write_randomly_runner(const char *filename, BYTES *bytes_arr,
+	BYTES *buffer_size_arr, BYTES *interval_len_arr, size_t arr_size,
+	int measurements);
 
-void read_seq_runner(const char *filename, BYTES bytes,
+void read_seq_runner(const char *filename, BYTES *bytes_arr,
     BYTES *buffer_size_arr, size_t arr_size, int measurements);
-void read_randomly_runner(const char *filename, BYTES bytes, BYTES *buffer_size_arr,
-    size_t arr_size, BYTES lower_read_limit, BYTES upper_read_limit, int measurements);
+void read_randomly_runner(const char *filename, BYTES *bytes_arr,
+			  BYTES *buffer_size_arr, BYTES *interval_len_arr,
+			  size_t arr_size, int measurements);
 
 #endif

@@ -11,9 +11,11 @@ __nanosec remove_files(FILES amount);
 __nanosec list_dir(FILES file_amount);
 
 __nanosec write_seq(int fd, BYTES bytes, BYTES buffer_size);
-__nanosec write_randomly(int fd, BYTES bytes, BYTES buffer_size, BYTES lower_write_limit, BYTES upper_write_limit);
+__nanosec write_randomly(int fd, BYTES size, BYTES buffer_size,
+			 BYTES interval_len);
 
 __nanosec read_seq(int fd, BYTES bytes, BYTES buffer_size);
-__nanosec read_randomly(int fd, BYTES bytes, BYTES buffer_size, BYTES lower_read_limit, BYTES upper_read_limit);
+__nanosec read_randomly(int fd, BYTES size, BYTES buffer_size,
+			BYTES interval_len);
 
 #endif

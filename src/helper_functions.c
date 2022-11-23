@@ -2,6 +2,8 @@
 
 #ifdef __Unikraft__
 #include "sys/random.h"
+#include "uk/print.h"
+#include "uk/assert.h"
 #endif
 
 #include <stdio.h>
@@ -104,6 +106,7 @@ void init_filenames(FILES file_amount, int max_filename_length, char *file_names
 	}
 }
 
+static void _fisher_yates_modern(BYTES **interval_order, BYTES total_intervals);
 
 /**
  * @brief calculate the file intervals and the order, in which to read / write
@@ -118,10 +121,10 @@ void init_filenames(FILES file_amount, int max_filename_length, char *file_names
  * @param[out] num_intervals
  */
 void slice_file(BYTES file_size, struct file_interval **intervals,
-		BYTES **interval_order, BYTES *num_intervals)
+		BYTES **interval_order, BYTES *num_intervals,
+		BYTES interval_len)
 {
 	// BYTES interval_len = MB(1);
-	BYTES interval_len = MB(1);
 	BYTES full_intervals = file_size / interval_len;
 	BYTES total_intervals;
 
@@ -133,8 +136,26 @@ void slice_file(BYTES file_size, struct file_interval **intervals,
 
 	*intervals = malloc(sizeof(struct file_interval)
 		* total_intervals);
+	if (!(*intervals)) {
+		#ifdef __Unikraft__
+		uk_pr_err("malloc failed \n");
+		UK_CRASH("malloc failed\n");
+		#elif __linux__
+		printf("malloc failed\n");
+		exit(0);
+		#endif
+	}
 	*interval_order = malloc(sizeof(BYTES)
 		* total_intervals);
+	if (!(*interval_order)) {
+		#ifdef __Unikraft__
+		uk_pr_err("malloc failed \n");
+		UK_CRASH("malloc failed\n");
+		#elif __linux__
+		printf("malloc failed\n");
+		exit(0);
+		#endif
+	}
 	if (total_intervals > full_intervals) {
 		((*intervals)[full_intervals]).off = interval_len * full_intervals;
 		((*intervals)[full_intervals]).len = file_size % interval_len;
@@ -145,26 +166,41 @@ void slice_file(BYTES file_size, struct file_interval **intervals,
 		((*intervals)[i]).len = interval_len;
 	}
 
-	char *bitmap = calloc(total_intervals, 1);
 
 	for (BYTES i = 0; i < total_intervals; i++) {
-		BYTES r_number;
-
-		do {
-			#ifdef __linux__
-			r_number = rand();
-			#elif __Unikraft__
-			getrandom(&r_number,sizeof(BYTES), 0);
-			#endif
-
-			r_number = r_number % total_intervals;
-		} while (bitmap[r_number]);
-
-		(*interval_order)[i] = r_number;
-		bitmap[r_number] = 1;
+		(*interval_order)[i] = i;
 	}
 
-	*num_intervals = total_intervals;
+	_fisher_yates_modern(interval_order, total_intervals);
 
-	free(bitmap);
+	printf("Intervals shuffled!\n");
+
+	*num_intervals = total_intervals;
+}
+
+/**
+ * Fisher-Yates algorithm that uniformly shuffles an array.
+ */
+static void _fisher_yates_modern(BYTES **interval_order, BYTES total_intervals)
+{
+
+// 	for i from n−1 downto 1 do
+//      j ← random integer such that 0 ≤ j ≤ i
+//      exchange a[j] and a[i]
+
+	BYTES r_num;
+	BYTES temp;
+
+	for (BYTES i = total_intervals - 1; i >=1; i--) {
+		#ifdef __linux__
+		r_num = rand();
+		#elif __Unikraft__
+		getrandom(&r_num,sizeof(BYTES), 0);
+		#endif
+
+		r_num = r_num % (i + 1);
+		temp = (*interval_order)[r_num];
+		(*interval_order)[r_num] = (*interval_order)[i];
+		(*interval_order)[i] = temp;
+	}
 }
