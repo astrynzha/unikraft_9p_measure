@@ -80,14 +80,14 @@ int main(int argc, char *argv[])
 
 	#ifdef __linux__
 
-	// write_seq_runner("1G_file", bytes_arr_DAX,
-	// 		buffer_size_arr, arr_size, measurements);
-	// write_randomly_runner("1G_file", bytes_arr_DAX,
-	// 		buffer_size_arr, interval_len_arr, arr_size,
-	// 		measurements);
+	write_seq_runner("1G_file", bytes_arr_DAX,
+			buffer_size_arr, arr_size, measurements);
+	write_randomly_runner("1G_file", bytes_arr_DAX,
+			buffer_size_arr, interval_len_arr, arr_size,
+			measurements);
 
-	// read_seq_runner("1G_file", bytes_arr_DAX,
-	// 		buffer_size_arr, arr_size, measurements);
+	read_seq_runner("1G_file", bytes_arr_DAX,
+			buffer_size_arr, arr_size, measurements);
 	read_randomly_runner("1G_file", bytes_arr_DAX,
 			buffer_size_arr, interval_len_arr, arr_size,
 			measurements);
