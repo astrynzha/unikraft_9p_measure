@@ -47,12 +47,19 @@ int main(int argc, char *argv[])
 		printf("%lu\n", amount[i]);
 	}
 
-	// create_files_runner(amount, 17, 10);
-	// remove_files_runner(amount, 17, 10);
-	// list_dir_runner(amount, 17, 10);
+	int measurements_files = 6;
 
-	int max_pow2 = 20;
-	int min_pow2 = 4;
+	// create_files_runner(amount, 17, measurements_files);
+	create_all_files(amount, max_pow, measurements_files);
+	list_dir_runner(amount, 17, measurements_files);
+	remove_files_runner(amount, 17, measurements_files);
+
+
+
+
+/*
+	int max_pow2 = 16;
+	int min_pow2 = 14;
 	int arr_size = max_pow2 - min_pow2 + 1;
 
 	BYTES bytes_arr_FUSE[arr_size];
@@ -86,19 +93,19 @@ int main(int argc, char *argv[])
 			buffer_size_arr, interval_len_arr, arr_size,
 			measurements);
 
-	read_seq_runner("1G_file", bytes_arr_DAX,
-			buffer_size_arr, arr_size, measurements);
-	read_randomly_runner("1G_file", bytes_arr_DAX,
-			buffer_size_arr, interval_len_arr, arr_size,
-			measurements);
+	// read_seq_runner("1G_file", bytes_arr_DAX,
+	// 		buffer_size_arr, arr_size, measurements);
+	// read_randomly_runner("1G_file", bytes_arr_DAX,
+	// 		buffer_size_arr, interval_len_arr, arr_size,
+	// 		measurements);
 
 	#elif __Unikraft__
 
-	write_seq_runner("1G_file", bytes_arr_FUSE,
-			buffer_size_arr, arr_size, measurements);
-	write_randomly_runner("1G_file", bytes_arr_FUSE,
-			buffer_size_arr, interval_len_arr, arr_size,
-			measurements);
+	// write_seq_runner("1G_file", bytes_arr_FUSE,
+	// 		buffer_size_arr, arr_size, measurements);
+	// write_randomly_runner("1G_file", bytes_arr_FUSE,
+	// 		buffer_size_arr, interval_len_arr, arr_size,
+	// 		measurements);
 
 	read_seq_runner("1G_file", bytes_arr_FUSE,
 			buffer_size_arr, arr_size, measurements);
@@ -109,4 +116,5 @@ int main(int argc, char *argv[])
 	#endif
 
 	return 0;
+*/
 }

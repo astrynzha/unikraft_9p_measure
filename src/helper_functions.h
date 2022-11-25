@@ -49,6 +49,7 @@ BYTES sample_in_range(BYTES lower, BYTES upper);
 void read_bytes(int fd, BYTES bytes, BYTES buffer_size, char *buffer);
 void write_bytes(FILE *file, BYTES bytes, BYTES buffer_size);
 void init_filenames(FILES file_amount, int max_filename_length, char *file_names);
+void create_all_files(FILES *amount, size_t len, int measurements);
 void slice_file(BYTES file_size, struct file_interval **intervals,
 		BYTES **interval_order, BYTES *num_intervals,
 		BYTES interval_len);

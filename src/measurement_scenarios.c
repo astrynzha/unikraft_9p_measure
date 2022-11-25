@@ -21,35 +21,36 @@
 __nanosec create_files(FILES amount) {
 	char dir_name[] = "create_files";
 	mkdir(dir_name, 0777);
+	int dir_fd = open(dir_name, O_RDONLY);
 	chdir(dir_name);
 
 	// initializing file names
 
-    int max_file_name_length = 7 + DIGITS(amount - 1);
+	int max_file_name_length = 7 + DIGITS(amount - 1);
 	char *file_names = (char*) malloc(amount*max_file_name_length); // 2D array
 	init_filenames(amount, max_file_name_length, file_names);
 
-    // measuring the creation of `amount` files
+	// measuring the creation of `amount` files
 
 	__nanosec start, end;
 	start = _clock();
 
 	for (FILES i = 0; i < amount; i++) {
-		FILE *file = fopen(file_names + i * max_file_name_length, "w");
-	    if (file == NULL) {
-            fprintf(stderr, "Error creating file number %lu.\n", i);
-            exit(EXIT_FAILURE);
-        }
-		#ifdef __linux__
-		int fd = fileno(file);
-		fsync(fd);
-		#endif
-		fclose(file);
+
+		int fd = open(file_names + i * max_file_name_length,
+			O_WRONLY | O_CREAT | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
+		if (fd == -1) {
+			fprintf(stderr, "Error creating file number %lu.\n", i);
+			exit(EXIT_FAILURE);
+		}
+		close(fd);
 	}
+
+	fsync(dir_fd);
 
 	end = _clock();
 
-    // cleaning up: deleting all files
+	// cleaning up: deleting all files
 
 	for (FILES i = 0; i < amount; i++) {
 		char *file_name = file_names + i * max_file_name_length;
@@ -57,11 +58,12 @@ __nanosec create_files(FILES amount) {
 			fprintf(stderr, "Failed to remove \"%s\" file\n", file_name);
 		}
 	}
-    chdir("..");
-    int ret = rmdir(dir_name);
-    if (ret == -1) {
-        printf("Failed to remove directory %s\n", dir_name);
-    }
+	chdir("..");
+	close(dir_fd);
+	int ret = rmdir(dir_name);
+	if (ret == -1) {
+		printf("Failed to remove directory %s\n", dir_name);
+	}
 
 	free(file_names);
 
@@ -80,18 +82,18 @@ __nanosec remove_files(FILES amount) {
 
 	// initializing file names
 
-    int max_file_name_length = 7 + DIGITS(amount - 1);
+	int max_file_name_length = 7 + DIGITS(amount - 1);
 	char *file_names = (char*) malloc(amount*max_file_name_length); // 2D array
 	init_filenames(amount, max_file_name_length, file_names);
 
-    // creating `amount` empty files
+	// creating `amount` empty files
 
 	for (FILES i = 0; i < amount; i++) {
 		FILE *file = fopen(file_names + i*max_file_name_length, "w");
-	    if (file == NULL) {
-            fprintf(stderr, "Error creating file number %lu.\n", i);
-            exit(EXIT_FAILURE);
-        }
+		if (file == NULL) {
+			fprintf(stderr, "Error creating file number %lu.\n", i);
+			exit(EXIT_FAILURE);
+		}
 		fclose(file);
 	}
 
@@ -100,26 +102,23 @@ __nanosec remove_files(FILES amount) {
 	system("sync; echo 3 > /proc/sys/vm/drop_caches");
 	#endif
 
-    // measuring the delition of `amount` files
+	// measuring the delition of `amount` files
 
-    __nanosec start, end;
+	__nanosec start, end;
 	start = _clock();
 	for (FILES i = 0; i < amount; i++) {
 		char *file_name = file_names + i * max_file_name_length;
 		if (remove(file_name) != 0) {
 			fprintf(stderr, "Failed to remove \"%s\" file\n", file_name);
 		}
-		#ifdef __linux__
-		sync();
-		#endif
 	}
 	end = _clock();
 
-    chdir("..");
-    int ret = rmdir(dir_name);
-    if (ret == -1) {
-        printf("Failed to remove directory %s\n", dir_name);
-    }
+	chdir("..");
+	int ret = rmdir(dir_name);
+	if (ret == -1) {
+		printf("Failed to remove directory %s\n", dir_name);
+	}
 
 	free(file_names);
 
@@ -134,33 +133,27 @@ __nanosec remove_files(FILES amount) {
 */
 __nanosec list_dir(FILES file_amount) {
 	__nanosec start, end;
+	FILES file_count = 0;
 
-	start = _clock();
 
 	DIR *dp;
 	struct dirent *ep;
 	dp = opendir ("./");
-    if (dp == NULL) {
-		fprintf(stderr, "Couldn't open the directory\n");
-    }
+	if (dp == NULL) {
+			fprintf(stderr, "Couldn't open the directory\n");
+	}
 
-	char str[256];
-	#ifdef DEBUGMODE
-	FILES file_count = 0;
-	#endif
-    while ( (ep = readdir (dp)) ) {
-		strcpy(str, ep->d_name); // using filenames somehow
-		#ifdef DEBUGMODE
+	start = _clock();
+
+	while ( (ep = readdir (dp)) ) {
 		file_count++;
-		#endif
-    }
-    (void) closedir (dp);
+	}
 
 	end = _clock();
 
-	#ifdef DEBUGMODE
+	(void) closedir (dp);
+
 	assert(file_amount + 2 == file_count);
-	#endif
 
     return end - start;
 }

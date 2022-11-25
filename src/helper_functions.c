@@ -10,6 +10,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 
 
 
@@ -104,6 +107,44 @@ void init_filenames(FILES file_amount, int max_filename_length, char *file_names
 		sprintf(suffix, "file_%lu", i);
 		strcpy(file_names + i*max_filename_length, suffix);
 	}
+}
+
+void create_all_files(FILES *amount, size_t len, int measurements)
+{
+	int rc;
+	int fd;
+	char dname[256];
+	char fname[256];
+
+	for (size_t i = 0; i < len; i++) {
+
+		for (int j = 0; j < measurements; j++) {
+
+			/* creating a directory for the j+1th measurement
+			   of amount[i] files */
+			sprintf(dname, "%lu_m%d", amount[i], j + 1);
+			mkdir(dname, 0777);
+			rc = chdir(dname);
+			if (rc) {
+				printf("Error: could not change directory to "
+				"%s\n", dname);
+			}
+
+			/* populating the directory with the amount[i] files */
+			for (FILES k = 0; k < amount[i]; k++) {
+				sprintf(fname, "%lu", k);
+				fd = open(fname, O_WRONLY | O_CREAT | O_TRUNC,
+					S_IRWXU | S_IRWXG | S_IRWXO);
+				if (fd == -1)  {
+					fprintf(stderr, "Error creating file number %lu.\n", i);
+					exit(EXIT_FAILURE);
+				}
+				close(fd);
+			}
+			chdir("..");
+		}
+	}
+
 }
 
 static void _fisher_yates_modern(BYTES **interval_order, BYTES total_intervals);
