@@ -14,6 +14,16 @@
 #define DEBUG_PRINT(...)
 #endif
 
+#ifdef __linux__
+#ifdef __GNUC__
+#define likely(x)       __builtin_expect(!!(x), 1)
+#define unlikely(x)     __builtin_expect(!!(x), 0)
+#else
+#define likely(x)       (x)
+#define unlikely(x)     (x)
+#endif /* __linux__ */
+#endif /* __GNUC__ */
+
 #define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
 // how many digits a number has. Cannot be less than 1.
 #define DIGITS(num) ((int)((ceil(log10(MAX(num, 1))+1)*sizeof(char))))

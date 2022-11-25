@@ -9,6 +9,9 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#ifdef __Unikraft__
+#include <uk/arch/lcpu.h>
+#endif /* __Unikraft__ */
 
 /*
     Measure removing `amount` files.
@@ -162,6 +165,75 @@ __nanosec list_dir(FILES file_amount) {
     return end - start;
 }
 
+#ifdef __Unikraft__
+static inline size_t write_9p(int fd, char *buffer, BYTES buffer_size)
+{
+	BYTES rc;
+	BYTES bytes_written = 0;
+	size_t buff_limit_9p = 516096;
+
+	BYTES iterations = buffer_size / buff_limit_9p;
+	BYTES rest = buffer_size % buff_limit_9p;
+
+	for (BYTES i = 0; i < iterations; i++) {
+		rc = write(fd, buffer, buff_limit_9p);
+		if (unlikely(rc != buff_limit_9p)) {
+			fprintf(stderr, "Failed to write\n\
+					rc = %llu\n\
+					buffer = %lu\n",
+					rc, buff_limit_9p);
+		}
+		bytes_written += rc;
+	}
+	if (rest > 0) {
+		rc = write(fd, buffer, rest);
+		if (unlikely(rc != rest)) {
+			fprintf(stderr, "Failed to write the rest\n\
+					rc = %llu\n\
+					buffer = %llu\n",
+					rc, rest);;
+		}
+		bytes_written += rc;
+	}
+
+	return bytes_written;
+}
+
+static inline size_t read_9p(int fd, char *buffer, BYTES buffer_size)
+{
+	BYTES rc;
+	BYTES bytes_read = 0;
+	size_t buff_limit_9p = 516096;
+
+	BYTES iterations = buffer_size / buff_limit_9p;
+	BYTES rest = buffer_size % buff_limit_9p;
+
+	for (BYTES i = 0; i < iterations; i++) {
+		rc = read(fd, buffer, buff_limit_9p);
+		if (unlikely(rc != buff_limit_9p)) {
+			fprintf(stderr, "Failed to read\n\
+					rc = %llu\n\
+					buffer = %lu\n",
+					rc, buff_limit_9p);;
+		}
+		bytes_read += rc;
+	}
+	if (rest > 0) {
+		rc = read(fd, buffer, rest);
+		if (unlikely(rc != rest)) {
+			fprintf(stderr, "Failed to read the rest\n\
+					rc = %llu\n\
+					buffer = %llu\n",
+					rc, rest);;
+		}
+		bytes_read += rc;
+	}
+
+	return bytes_read;
+}
+
+#endif /* __Unikraft__ */
+
 /*
     Measuring sequential write with buffer on heap, allocated with malloc.
 	Buffer size can be set through 'buffer_size'.
@@ -169,7 +241,9 @@ __nanosec list_dir(FILES file_amount) {
     Write file is created and deleted by the function.
 */
 __nanosec write_seq(int fd, BYTES bytes, BYTES buffer_size) {
-	long long rc;
+	#ifdef __linux__
+	BYTES rc;
+	#endif /* __linux__ */
 
 	char *buffer = malloc(buffer_size);
 	if (buffer == NULL) {
@@ -183,20 +257,27 @@ __nanosec write_seq(int fd, BYTES bytes, BYTES buffer_size) {
 	start = _clock();
 
 	for (BYTES i = 0; i < iterations; i++) {
+		#ifdef __linux__
 		rc = write(fd, buffer, buffer_size);
-		if (rc == -1) {
+		if (unlikely(rc != buffer_size)) {
 			fprintf(stderr, "Failed to write\n");
 		}
+		#elif __Unikraft__
+		write_9p(fd, buffer, buffer_size);
+		#endif
 	}
 	if (rest > 0) {
+		#ifdef __linux__
 		rc = write(fd, buffer, rest);
-		if (rc == -1) {
+		if (unlikely(rc != rest)) {
 			fprintf(stderr, "Failed to write the rest of the file\n");
 		}
+		#elif __Unikraft__
+		write_9p(fd, buffer, rest);
+		#endif
 	}
 
-	/* TODO: should I measure with the fsync? */
-	// fsync(fd);
+	fsync(fd);
 
 	end = _clock();
 
@@ -226,7 +307,9 @@ __nanosec write_randomly(int fd, BYTES size, BYTES buffer_size,
 		&interval_order, &num_intervals,
 		interval_len);
 
-	long long rc;
+	#ifdef __linux__
+	BYTES rc;
+	#endif /* __linux__ */
 
 	char *buffer = malloc(buffer_size);
 	if (buffer == NULL) {
@@ -251,16 +334,24 @@ __nanosec write_randomly(int fd, BYTES size, BYTES buffer_size,
 		BYTES rest = len % buffer_size;
 
 		for (BYTES j = 0; j < iterations; j++) {
+			#ifdef __linux__
 			rc = write(fd, buffer, buffer_size);
-			if (rc == -1) {
+			if (unlikely(rc != buffer_size)) {
 				fprintf(stderr, "Failed to write\n");
 			}
+			#elif __Unikraft__
+			write_9p(fd, buffer, buffer_size);
+			#endif
 		}
 		if (rest > 0) {
+			#ifdef __linux__
 			rc = write(fd, buffer, rest);
-			if (rc == -1) {
+			if (unlikely(rc != rest)) {
 				fprintf(stderr, "Failed to write the rest of the file\n");
 			}
+			#elif __Unikraft__
+			write_9p(fd, buffer, rest);
+			#endif
 		}
 	}
 
@@ -279,7 +370,9 @@ __nanosec write_randomly(int fd, BYTES size, BYTES buffer_size,
 */
 __nanosec read_seq(int fd, BYTES bytes, BYTES buffer_size)
 {
-	long long rc;
+	#ifdef __linux__
+	BYTES rc;
+	#endif /* __linux__ */
 	BYTES iterations = bytes / buffer_size;
 	BYTES rest = bytes % buffer_size;
 
@@ -294,38 +387,28 @@ __nanosec read_seq(int fd, BYTES bytes, BYTES buffer_size)
 	start = _clock();
 
 	for (BYTES i = 0; i < iterations; i++) {
+		#ifdef __linux__
 		rc = read(fd, buffer, buffer_size);
-		if (rc == -1) {
-			fprintf(stderr, "errno: %s\n",
-				strerror(errno));
-			fprintf(stderr,
-			"Failed to read on iteration #%llu\n", i);
-			start = end = 0;
-			goto out;
+		if (unlikely(rc != buffer_size)) {
+			fprintf(stderr, "Failed to write\n");
 		}
-
-		// if (buffer_size != fread(buffer, sizeof(char), buffer_size, file)) {
-		// 	fprintf(stderr, "Failed to read on iteration #%llu\n", i);
-		// }
+		#elif __Unikraft__
+		read_9p(fd, buffer, buffer_size);
+		#endif
 	}
 	if (rest > 0) {
+		#ifdef __linux__
 		rc = read(fd, buffer, rest);
-		if (rc == -1) {
-			fprintf(stderr,
-			"Failed to read the rest of the file\n");
-			start = end = 0;
-			goto out;
+		if (unlikely(rc != rest)) {
+			fprintf(stderr, "Failed to write the rest of the file\n");
 		}
-		// if (rest != fread(buffer, sizeof(char), rest, file)) {
-		// 	fprintf(stderr, "Failed to read the rest of the file\n");
-		// }
+		#elif __Unikraft__
+		read_9p(fd, buffer, rest);
+		#endif
 	}
-
-	// fsync(fd);
 
 	end = _clock();
 
-out:
 	free(buffer);
 	return end - start;
 }
@@ -344,6 +427,9 @@ out:
 __nanosec read_randomly(int fd, BYTES size, BYTES buffer_size,
 			BYTES interval_len)
 {
+	#ifdef __linux__
+	BYTES rc;
+	#endif /* __linux__ */
 	struct file_interval *intervals;
 	BYTES *interval_order;
 	BYTES num_intervals;
@@ -370,21 +456,28 @@ __nanosec read_randomly(int fd, BYTES size, BYTES buffer_size,
 		lseek(fd, off, SEEK_SET);
 		// read_bytes(fd, len, buffer_size, buffer);
 
-		long long rc;
 		BYTES iterations = len / buffer_size;
 		BYTES rest = len % buffer_size;
 
 		for (BYTES i = 0; i < iterations; i++) {
+			#ifdef __linux__
 			rc = read(fd, buffer, buffer_size);
-			if (rc == -1) {
-				puts("Failed to read\n");
+			if (unlikely(rc != buffer_size)) {
+				fprintf(stderr, "Failed to write\n");
 			}
+			#elif __Unikraft__
+			read_9p(fd, buffer, buffer_size);
+			#endif
 		}
 		if (rest > 0) {
+			#ifdef __linux__
 			rc = read(fd, buffer, rest);
-			if (rc == -1) {
-				puts("Failed to read\n");
+			if (unlikely(rc != rest)) {
+				fprintf(stderr, "Failed to write the rest of the file\n");
 			}
+			#elif __Unikraft__
+			read_9p(fd, buffer, rest);
+			#endif
 		}
 	}
 
