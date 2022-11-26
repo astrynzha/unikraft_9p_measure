@@ -37,23 +37,28 @@ int main(int argc, char *argv[])
 	DEBUG_PRINT("Running on %s\n", platform);
 	DEBUG_PRINT("__________________________\n");
 
-	// create_file_of_size("data_100M", MB(100));
+	int max_files = 17;
+	int min_files = 1;
+	int arr_size_files = max_files - min_files + 1;
 
-	int max_pow = 17;
-	FILES amount[max_pow];
-	puts("amount");
-	for (int i = 0; i < max_pow; i++) { // buffer_sizes = {16, 32, 64, ..., 2^max_pow}
-		amount[i] = bpow(2, i + 1);
-		printf("%lu\n", amount[i]);
+	FILES amount[arr_size_files];
+
+	printf("amount\n");
+	for (int i = min_files; i < max_files + 1; i++) { // buffer_sizes = {16, 32, 64, ..., 2^max_pow}
+		amount[i-min_files] = bpow(2, i);
+		printf("%lu\n", amount[i-min_files]);
 	}
 
 	int measurements_files = 6;
 
 	// create_files_runner(amount, 17, measurements_files);
-	// create_all_files(amount, max_pow, measurements_files);
-	// list_dir_runner(amount, 17, measurements_files);
+	// create_all_files(amount, arr_size_files, measurements_files);
+	list_dir_runner(amount, 17, measurements_files);
 	remove_files_runner(amount, 17, measurements_files);
 
+	#ifdef __linux__
+	system("sync; echo 3 > /proc/sys/vm/drop_caches");
+	#endif
 
 
 
