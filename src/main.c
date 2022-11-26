@@ -51,8 +51,8 @@ int main(int argc, char *argv[])
 
 	// create_files_runner(amount, 17, measurements_files);
 	// create_all_files(amount, max_pow, measurements_files);
-	list_dir_runner(amount, 17, measurements_files);
-	// remove_files_runner(amount, 17, measurements_files);
+	// list_dir_runner(amount, 17, measurements_files);
+	remove_files_runner(amount, 17, measurements_files);
 
 
 

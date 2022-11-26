@@ -76,49 +76,30 @@ __nanosec create_files(FILES amount) {
     Necessary files are created and deleted by the function.
 */
 __nanosec remove_files(FILES amount) {
-	char dir_name[] = "remove_files";
-	mkdir(dir_name, 0777);
-	chdir(dir_name);
 
-	// initializing file names
-
-	int max_file_name_length = 7 + DIGITS(amount - 1);
-	char *file_names = (char*) malloc(amount*max_file_name_length); // 2D array
-	init_filenames(amount, max_file_name_length, file_names);
-
-	// creating `amount` empty files
-
+	// array of strings of size 256
+	char *file_names = (char*) malloc(amount*256);
+	char fname[256];
 	for (FILES i = 0; i < amount; i++) {
-		FILE *file = fopen(file_names + i*max_file_name_length, "w");
-		if (file == NULL) {
-			fprintf(stderr, "Error creating file number %lu.\n", i);
-			exit(EXIT_FAILURE);
-		}
-		fclose(file);
+		sprintf(fname, "%lu", i);
+		strncpy(file_names + i*256, fname, 256);
 	}
 
 	// flush FS buffers and free pagecaches
-	#ifdef __linux__
-	system("sync; echo 3 > /proc/sys/vm/drop_caches");
-	#endif
+	// #ifdef __linux__
+	// system("sync; echo 3 > /proc/sys/vm/drop_caches");
+	// #endif
 
-	// measuring the delition of `amount` files
 
 	__nanosec start, end;
 	start = _clock();
 	for (FILES i = 0; i < amount; i++) {
-		char *file_name = file_names + i * max_file_name_length;
-		if (remove(file_name) != 0) {
+		char *file_name = file_names + i * 256;
+		if (unlink(file_name) != 0) {
 			fprintf(stderr, "Failed to remove \"%s\" file\n", file_name);
 		}
 	}
 	end = _clock();
-
-	chdir("..");
-	int ret = rmdir(dir_name);
-	if (ret == -1) {
-		printf("Failed to remove directory %s\n", dir_name);
-	}
 
 	free(file_names);
 

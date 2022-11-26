@@ -72,63 +72,102 @@ void create_files_runner(FILES *amount_arr, size_t arr_size, int measurements) {
     chdir("..");
 }
 
-void remove_files_runner(FILES *amount_arr, size_t arr_size, int measurements) {
+void remove_files_runner(FILES *amount_arr, size_t arr_size, int measurements)
+{
+	int rc;
 
-    // create a separate directory for this experiment
+	// starting in /
 
-    #ifdef __Unikraft__
-    char dir_name[] = "remove_files_unikraft";
-    #elif __linux__
-    char dir_name[] = "remove_files_linux";
-    #endif
-    mkdir(dir_name, 0777);
-    if (chdir(dir_name) == -1) {
-        printf("Error: could not change directory to %s\n", dir_name);
-    }
+	// create a separate directory for this experiment
 
-    char fname_results[] = "results.csv";
-   FILE *fp_results = fopen(fname_results, "w");
+	#ifdef __Unikraft__
+	char dir_rm_dir[] = "remove_files_unikraft";
+	#elif __linux__
+	char dir_rm_dir[] = "remove_files_linux";
+	#endif
+	mkdir(dir_rm_dir, 0777);
+	rc = chdir(dir_rm_dir);
+	if (rc == -1) {
+		printf("Error: could not change directory to %s\n", dir_rm_dir);
+	}
 
-    for (size_t i = 0; i < arr_size; i++) { // conducts measurement for each amount of files
-        char fname[17+DIGITS(i)];
-        sprintf(fname, "measurement_%lu.csv", i);
-        FILE *fp_measurement = fopen(fname, "w");
+	char fname_results[] = "results.csv";
+	FILE *fp_results = fopen(fname_results, "w");
 
-        FILES amount = amount_arr[i];
+	char dname[256];
 
-        // measures 'measurements' times the creation of 'amount' files takes
+	for (size_t i = 0; i < arr_size; i++) {
 
-        printf("###########################\n");
-        printf("%lu/%lu. Measuring removing %lu files\n", i+1, arr_size, amount);
+		// in /remove_dir_unikraft
 
-        __nanosec result;
-        __nanosec result_ms;
-        __nanosec total = 0;
+		char fname[17+DIGITS(i)];
+		sprintf(fname, "measurement_%lu.csv", i);
+		FILE *fp_measurement = fopen(fname, "w");
+		rc = chdir("..");
+		if (rc == -1) {
+			printf("Error: could not change directory to %s\n", "..");
+		}
 
-        for (int i = 0; i < measurements; i++) {
-            printf("Measurement %d/%d running...\n", i + 1, measurements);
+		// in /
 
-            result = remove_files(amount);
+		FILES amount = amount_arr[i];
 
-            fprintf(fp_measurement, "%lu\n", result);
-            result_ms = nanosec_to_milisec(result);
-            printf("Result: %lums %.3fs\n", result_ms, (double) result_ms / 1000);
+		printf("###########################\n");
+		printf("%lu/%lu. Measuring removing %lu files\n", i+1, arr_size, amount);
 
-            total += result;
-        }
+		__nanosec result;
+		__nanosec result_ms;
+		__nanosec total = 0;
 
-        total /= measurements;
-        fprintf(fp_results, "%lu,%lu\n", amount, total);
-        __nanosec total_ms = nanosec_to_milisec(total);
+		for (int j = 0; j < measurements; j++) {
+			sprintf(dname, "%lu_m%d", amount, j + 1);
+			rc = chdir(dname);
+			if (rc == -1) {
+				printf("Error: could not change directory to"
+				" %s\n", dname);
+			}
 
-        printf("%d measurements successfully conducted\n", measurements);
-        printf("Removing %lu files took on average: %lums %.3fs \n", amount, total_ms, (double) total_ms / 1000);
+			printf("Measurement %d/%d running...\n",
+				j + 1, measurements);
 
-        fclose(fp_measurement);
-    }
+			result = remove_files(amount);
 
-    fclose(fp_results);
-    chdir("..");
+			fprintf(fp_measurement, "%lu\n", result);
+			result_ms = nanosec_to_milisec(result);
+			printf("Result: %lums %.3fs\n", result_ms, (double) result_ms / 1000);
+
+			total += result;
+
+			rc = chdir("..");
+			if (rc == -1) {
+				printf("Error: could not change directory "
+				"to %s\n", "..");
+			}
+		}
+
+		// in /
+
+		total /= measurements;
+		fprintf(fp_results, "%lu,%lu\n", amount, total);
+		__nanosec total_ms = nanosec_to_milisec(total);
+
+		printf("%d measurements successfully conducted\n", measurements);
+		printf("Removing %lu files took on average: %lums %.3fs \n", amount, total_ms, (double) total_ms / 1000);
+
+		fclose(fp_measurement);
+
+		// in /
+
+		rc = chdir(dir_rm_dir);
+		if (rc == -1) {
+			printf("Error: could not change directory to %s\n", dir_rm_dir);
+		}
+
+		//in /remove_dir_unikraft
+	}
+
+	fclose(fp_results);
+	chdir("..");
 }
 
 void list_dir_runner(FILES *amount_arr, size_t arr_size, int measurements)
@@ -157,6 +196,7 @@ void list_dir_runner(FILES *amount_arr, size_t arr_size, int measurements)
 	char dname[256];
 
 	for (size_t i = 0; i < arr_size; i++) {
+
 		//in /list_dir_unikraft
 
 		// directory for files to create and list in
@@ -215,12 +255,6 @@ void list_dir_runner(FILES *amount_arr, size_t arr_size, int measurements)
 
 		// in /
 
-		rc = chdir(dir_list_dir);
-		if (rc == -1) {
-			printf("Error: could not change directory to %s\n",
-				dir_list_dir);
-		}
-
 		total /= measurements;
 		fprintf(fp_results, "%lu,%lu\n", file_amount, total);
 		__nanosec total_ms = nanosec_to_milisec(total);
@@ -229,11 +263,6 @@ void list_dir_runner(FILES *amount_arr, size_t arr_size, int measurements)
 		printf("Listing %lu files took on average: %lums %.3fs \n", file_amount, total_ms, (double) total_ms / 1000);
 
 		fclose(fp_measurement);
-
-		rc = chdir("..");
-		if (rc == -1) {
-			printf("Error: could not change directory to %s\n", "..");
-		}
 
 		// in /
 
