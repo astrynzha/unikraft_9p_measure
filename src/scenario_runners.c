@@ -131,18 +131,22 @@ void remove_files_runner(FILES *amount_arr, size_t arr_size, int measurements) {
     chdir("..");
 }
 
-void list_dir_runner(FILES *amount_arr, size_t arr_size, int measurements) {
+void list_dir_runner(FILES *amount_arr, size_t arr_size, int measurements)
+{
+	int rc;
 
+	// starting in /
 	// create outer directory
 
 	#ifdef __Unikraft__
-	char dir_name[] = "list_dir_unikraft";
+	char dir_list_dir[] = "list_dir_unikraft";
 	#elif __linux__
-	char dir_name[] = "list_dir_linux";
+	char dir_list_dir[] = "list_dir_linux";
 	#endif
-	mkdir(dir_name, 0777);
-	if (chdir(dir_name) == -1) {
-		printf("Error: could not change directory to %s\n", dir_name);
+	mkdir(dir_list_dir, 0777);
+	rc = chdir(dir_list_dir);
+	if (rc == -1) {
+		printf("Error: could not change directory to %s\n", dir_list_dir);
 	}
 
 	// file for mean
@@ -151,61 +155,70 @@ void list_dir_runner(FILES *amount_arr, size_t arr_size, int measurements) {
 	FILE *fp_results = fopen(fname_results, "w");
 
 	char dname[256];
-	char fname[256];
 
-	for (size_t i = 0; i < arr_size; i++) { // conducts measurement for each amount of files
+	for (size_t i = 0; i < arr_size; i++) {
+		//in /list_dir_unikraft
 
 		// directory for files to create and list in
 
 		char fname[17+DIGITS(i)];
 		sprintf(fname, "measurement_%lu.csv", i);
 		FILE *fp_measurement = fopen(fname, "w");
-		chdir("..");
+		rc = chdir("..");
+		if (rc == -1) {
+			printf("Error: could not change directory to %s\n", "..");
+		}
+
+		// in /
 
 		FILES file_amount = amount_arr[i];
 
 
 		printf("###########################\n");
-		printf("%lu/%lu. Measuring listing %lu files\n", i+1, arr_size, file_amount);
+		printf("%lu/%lu. Measuring listing %lu files\n", i+1,
+			arr_size, file_amount);
 
 		__nanosec result;
 		__nanosec result_ms;
 		__nanosec total = 0;
 
-		// measuring 'measurements' times the listing of 'file_amount' files takes
 		for (int j = 0; j < measurements; j++) {
-
-			// initializing dummy files
-
-			int max_file_name_length = 7 + DIGITS(file_amount - 1);
-			char *file_names = (char*) malloc(file_amount*max_file_name_length); // implicit 2D array
-			init_filenames(file_amount, max_file_name_length, file_names);
-
-			for (FILES i = 0; i < file_amount; i++) {
-			create_file_of_size(file_names + i*max_file_name_length, 0);
+			sprintf(dname, "%lu_m%d", file_amount, j + 1);
+			rc = chdir(dname);
+			if (rc == -1) {
+				printf("Error: could not change directory to"
+				" %s\n", dname);
 			}
 
-			#ifdef __linux__
-			system("sync; echo 3 > /proc/sys/vm/drop_caches");
-			#endif
+			// #ifdef __linux__
+			// system("sync; echo 3 > /proc/sys/vm/drop_caches");
+			// #endif
 
-			printf("Measurement %d/%d running...\n", j + 1, measurements);
+			printf("Measurement %d/%d running...\n",
+				j + 1, measurements);
 
 			result = list_dir(file_amount);
 
 			fprintf(fp_measurement, "%lu\n", result);
 			result_ms = nanosec_to_milisec(result);
-			printf("Result: %lums %.3fs\n", result_ms, (double) result_ms / 1000);
+			printf("Result: %lums %.3fs\n",
+				result_ms, (double) result_ms / 1000);
 
 			total += result;
-			// deleting all created files and directories
 
-			for (FILES i = 0; i < file_amount; i++) {
-				if (remove(file_names + i*max_file_name_length) != 0) {
-					fprintf(stderr, "Failed to remove \"%s\" file\n",
-						file_names + i*max_file_name_length);
-				}
+			rc = chdir("..");
+			if (rc == -1) {
+				printf("Error: could not change directory "
+				"to %s\n", "..");
 			}
+		}
+
+		// in /
+
+		rc = chdir(dir_list_dir);
+		if (rc == -1) {
+			printf("Error: could not change directory to %s\n",
+				dir_list_dir);
 		}
 
 		total /= measurements;
@@ -215,14 +228,21 @@ void list_dir_runner(FILES *amount_arr, size_t arr_size, int measurements) {
 		printf("%d measurements successfully conducted\n", measurements);
 		printf("Listing %lu files took on average: %lums %.3fs \n", file_amount, total_ms, (double) total_ms / 1000);
 
+		fclose(fp_measurement);
 
-		chdir("..");
-		int ret = rmdir(list_dir_name);
-		if (ret == -1) {
-		printf("Failed to remove directory %s\n", dir_name);
+		rc = chdir("..");
+		if (rc == -1) {
+			printf("Error: could not change directory to %s\n", "..");
 		}
 
-		fclose(fp_measurement);
+		// in /
+
+		rc = chdir(dir_list_dir);
+		if (rc == -1) {
+			printf("Error: could not change directory to %s\n", dir_list_dir);
+		}
+
+		//in /list_dir_unikraft
 	}
 
     fclose(fp_results);

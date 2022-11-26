@@ -50,9 +50,9 @@ int main(int argc, char *argv[])
 	int measurements_files = 6;
 
 	// create_files_runner(amount, 17, measurements_files);
-	create_all_files(amount, max_pow, measurements_files);
+	// create_all_files(amount, max_pow, measurements_files);
 	list_dir_runner(amount, 17, measurements_files);
-	remove_files_runner(amount, 17, measurements_files);
+	// remove_files_runner(amount, 17, measurements_files);
 
 
 

@@ -4,3 +4,4 @@ build/
 /9p_measure
 .config
 .config.old
+guest_fs
