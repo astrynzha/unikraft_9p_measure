@@ -230,10 +230,6 @@ void list_dir_runner(FILES *amount_arr, size_t arr_size, int measurements)
 				" %s\n", dname);
 			}
 
-			// #ifdef __linux__
-			// system("sync; echo 3 > /proc/sys/vm/drop_caches");
-			// #endif
-
 			printf("Measurement %d/%d running...\n",
 				j + 1, measurements);
 

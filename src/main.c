@@ -49,16 +49,20 @@ int main(int argc, char *argv[])
 		printf("%lu\n", amount[i-min_files]);
 	}
 
-	int measurements_files = 6;
+	int measurements_files = 20;
+
 
 	// create_files_runner(amount, 17, measurements_files);
-	// create_all_files(amount, arr_size_files, measurements_files);
-	list_dir_runner(amount, 17, measurements_files);
-	remove_files_runner(amount, 17, measurements_files);
-
+	create_all_files(amount, arr_size_files, measurements_files);
 	#ifdef __linux__
 	system("sync; echo 3 > /proc/sys/vm/drop_caches");
 	#endif
+	// list_dir_runner(amount, 17, measurements_files);
+	#ifdef __linux__
+	system("sync; echo 3 > /proc/sys/vm/drop_caches");
+	#endif
+	// remove_files_runner(amount, 17, measurements_files);
+
 
 
 
